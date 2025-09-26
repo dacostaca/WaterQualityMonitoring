@@ -50,6 +50,7 @@ void WiFiManager::begin(const wifi_config_t &config) {
 
 // Configurar managers
 void WiFiManager::setManagers(RTCMemoryManager* rtcMemory, WatchdogManager* watchdog) {
+    //metodo para configurar referencias a otros managers dando acceso a rtc y al watchdog
     _rtcMemory = rtcMemory;
     _watchdog = watchdog;
     log(" Referencias a managers configuradas");
@@ -58,6 +59,7 @@ void WiFiManager::setManagers(RTCMemoryManager* rtcMemory, WatchdogManager* watc
 // Conectar WiFi
 bool WiFiManager::connectWiFi() {
     if (!_wifiInitialized) {
+        //aborta la conexión si no se ha inicializado con begin()
         reportError(WatchdogManager::ERROR_WIFI_FAIL, WatchdogManager::SEVERITY_CRITICAL, 1);
         return false;
     }
@@ -65,14 +67,17 @@ bool WiFiManager::connectWiFi() {
     updateStatus(WIFI_CONNECTING, "Conectando a WiFi...");
     log(" Conectando a WiFi...");
     
-    _connectionStartTime = millis();
+    _connectionStartTime = millis(); //guarda instante de conexión
     
     // Intentar conectar
-    WiFi.begin(_config.ssid, _config.password);
+    WiFi.begin(_config.ssid, _config.password); // Inicia conexión WiFi
     
     // Esperar conexión con timeout
     uint32_t startTime = millis();
     while (WiFi.status() != WL_CONNECTED) {
+        //se queda en bucle mientras no esté conectado y calcula el tiempo
+        //si excede el tiempo máximo de espera, aborta y marca error wifi
+        //reporta al watchdog
         uint32_t elapsed = millis() - startTime;
         
         if (elapsed > _config.connect_timeout_ms) {
@@ -84,6 +89,7 @@ bool WiFiManager::connectWiFi() {
         
         // Alimentar watchdog durante espera
         if (_watchdog) {
+            //igual alimenta el watchdog para que no se reinicie
             _watchdog->feedWatchdog();
         }
         
@@ -108,6 +114,7 @@ bool WiFiManager::connectWiFi() {
 // Conectar WebSocket
 bool WiFiManager::connectWebSocket() {
     if (!isWiFiConnected()) {
+        //verificca conexión wifi activa
         log(" WiFi no conectado");
         return false;
     }
@@ -124,6 +131,9 @@ bool WiFiManager::connectWebSocket() {
     _dataTransmissionComplete = false;
     
     while (!_websocketConnected) {
+        //permanece en bucle hasta conectar o timeout usando la bandera _websocketConnected
+        //si supera el máximo de espera, aborta y marca error wifi
+        //reporta al watchdog
         uint32_t elapsed = millis() - startTime;
         
         if (elapsed > _config.websocket_timeout_ms) {
@@ -148,7 +158,7 @@ bool WiFiManager::connectWebSocket() {
             logf("⏳ Conectando WebSocket... %u ms", elapsed);
         }
     }
-    
+    //luego calcula el tiempo total hasta la conexión
     uint32_t connectionTime = millis() - startTime;
     logf(" WebSocket conectado en %u ms", connectionTime);
     
@@ -160,6 +170,7 @@ bool WiFiManager::connectWebSocket() {
 // función para esperar solicitud de datos
 bool WiFiManager::waitForDataRequest(uint32_t timeout_ms) {
     if (!isWebSocketConnected()) {
+        //confirma conexión websocket activa
         log(" WebSocket no conectado");
         return false;
     }
@@ -172,6 +183,7 @@ bool WiFiManager::waitForDataRequest(uint32_t timeout_ms) {
     
     while (!requestReceived && (millis() - startTime < timeout_ms)) {
         // Procesar eventos WebSocket
+        //permanece en bucle hasta recibir solicitud del servidor o timeout
         _webSocket.loop();
         
         // Verificar si recibimos solicitud
@@ -225,6 +237,8 @@ bool WiFiManager::sendStoredData(int maxReadings) {
     delay(100);
     
     // Obtener lecturas recientes
+    //buffer local para 120 lecturas definidas aquí mismo, probar cambios para aumentar cantidad de muestras envíadas
+    //trae las lecturas desde RTC Memory
     RTCMemoryManager::SensorReading readings[120]; // Aumentar capacidad
     int count = _rtcMemory->getRecentReadings(readings, maxReadings);
     
@@ -241,11 +255,17 @@ bool WiFiManager::sendStoredData(int maxReadings) {
     
     logf(" Enviando %d lecturas...", count);
     
+
+    //NUCLEO DEL PROCESO DE ENVÍO DE DATOS
     bool allSent = true;
     uint32_t sendStartTime = millis();
     int successCount = 0;
     
     for (int i = 0; i < count; i++) {
+        //envía cada lectura individualmente
+        //si falla alguna, marca allSent como false
+        //alimenta el watchdog durante el envío de datos
+        //cada 10 lecturas muestra progreso
         if (!sendReading(readings[i])) {
             logf(" Error enviando lectura #%d", readings[i].reading_number);
             allSent = false;
@@ -300,6 +320,9 @@ bool WiFiManager::sendStoredData(int maxReadings) {
         
         return successCount > 0; // Éxito parcial
     }
+    //fin del proceso de envío de datos
+    //si todo sale bien actualiza el estado y marca los datos como enviados en el RTC para no intentarlo otra vez
+    //en caso de errores parciales, también marca los que se enviaron correctamente
 }
 
 // Enviar una lectura específica 

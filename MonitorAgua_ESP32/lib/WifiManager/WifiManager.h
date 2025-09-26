@@ -17,6 +17,7 @@ class WiFiManager {
 public:
     // ——— Estados de conexión ———
     typedef enum {
+        //estados posibles de la conexión wifi/websocket
         WIFI_DISCONNECTED = 0,
         WIFI_CONNECTING = 1,
         WIFI_CONNECTED = 2,
@@ -31,6 +32,7 @@ public:
 
     // ——— Configuración WiFi ———
     typedef struct {
+        //Estructura de configuración basica de wifi y websocket
         const char* ssid;
         const char* password;
         const char* server_ip;

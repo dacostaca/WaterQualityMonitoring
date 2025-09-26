@@ -72,6 +72,11 @@ void WatchdogManager::feedWatchdog() {
 
 // Logging de errores
 void WatchdogManager::logError(error_code_t code, error_severity_t severity, uint32_t context) {
+    //crea entrada de error, guarda según severidad
+    //critico borra el más antiguo si buffer lleno
+    //warning hace shift FIFO
+    //Info simplemente descarta
+    //aumenta contador de errores y llama al callback de error si fue configurado
     logf(" Logging error: code=%d, severity=%d, context=%u", code, severity, context);
     
     ErrorEntry error;
@@ -145,6 +150,7 @@ void WatchdogManager::logError(error_code_t code, error_severity_t severity, uin
 
 // Verificación de salud del sistema
 bool WatchdogManager::performHealthCheck() {
+    //verifica memoria, tiempos, cantidad de fallos consecutivos y suma o resta al puntaje de salud
     log(" Verificando salud del sistema...");
     
     bool system_ok = true;
@@ -184,6 +190,8 @@ bool WatchdogManager::performHealthCheck() {
 
 // Registrar éxito
 void WatchdogManager::recordSuccess() {
+    //informan al watchdog del resultado de una operación
+    //resetea contador de fallos consecutivos y aumenta salud con exito y con fallos baja la salud
     wdt_consecutive_failures = 0;
     wdt_last_successful_operation = millis();
     
@@ -210,6 +218,7 @@ void WatchdogManager::recordFailure() {
 
 // Verificar fallos críticos
 bool WatchdogManager::hasCriticalFailures() {
+    //+10 fallos consecutivos o salud <10%
     return (wdt_consecutive_failures >= MAX_CONSECUTIVE_FAILURES) || 
            (wdt_system_health_score < 10);
 }
@@ -225,6 +234,9 @@ uint32_t WatchdogManager::getConsecutiveFailures() {
 
 // Intento de recuperación
 bool WatchdogManager::attemptRecovery() {
+    //restea parcialmente el sistema
+    //limpia info y warnings, reduce a la mitad los fallos consecutivos, fija la salud al 50%
+    //actualiza el timestamp de la última operación exitosa
     log(" Intentando recuperación del sistema...");
     
     memset(&wdt_warning_errors, 0, sizeof(wdt_warning_errors));
@@ -245,6 +257,8 @@ bool WatchdogManager::attemptRecovery() {
 
 // Manejo de emergencia
 void WatchdogManager::handleEmergency() {
+    //se ejecuta cuando el sistema está en pánico, intenta recuperar el sistema
+    //en caso de fallo notifica por callback y queda en modo emergencia 
     log(" MANEJO DE EMERGENCIA DEL SISTEMA");
     
     logError(ERROR_SYSTEM_PANIC, SEVERITY_CRITICAL, wdt_consecutive_failures);
@@ -340,6 +354,7 @@ bool WatchdogManager::isWatchdogHealthy() {
 
 // Inicializar watchdog hardware
 bool WatchdogManager::initializeHardwareWatchdog() {
+    //intenta configurar el watchdog hardware por 15 segundos
     log(" Inicializando Watchdog...");
     
     hardware_watchdog_available = false;
@@ -373,6 +388,7 @@ bool WatchdogManager::initializeHardwareWatchdog() {
 
 // Verificar memoria
 bool WatchdogManager::checkMemoryHealth() {
+    //verifica si la memoria libre es menor a 10KB
     size_t free_heap = ESP.getFreeHeap();
     if (free_heap < 10000) {
         logError(ERROR_MEMORY_LOW, SEVERITY_WARNING, free_heap);
@@ -386,6 +402,7 @@ bool WatchdogManager::checkMemoryHealth() {
 
 // Verificar tiempo
 bool WatchdogManager::checkTimingHealth() {
+    //si no hay éxito en más de 10 minutos, loguea warning
     uint32_t current_time = millis();
     if (wdt_last_successful_operation > 0) {
         uint32_t time_diff;

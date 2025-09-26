@@ -11,7 +11,7 @@ namespace pHSensor {
     esp_adc_cal_characteristics_t adc_chars;
     
     // Variables de calibración
-    float phOffset = PH_CALIBRATED_OFFSET;
+    float phOffset = PH_CALIBRATED_OFFSET;      //Posible problema ? verificar valor de las variables para la calibración
     float phSlope = PH_CALIBRATED_SLOPE;
     
     // Buffer de muestras para promediado
@@ -52,6 +52,7 @@ namespace pHSensor {
             }
             
             // Sumar todos excepto máximo y mínimo
+            //si hay varios minimos o maximos descarta todos los iguales podría ser malo si el valor real está en uno de los extremos
             int count = 0;
             for (int i = 0; i < number; i++) {
                 if (arr[i] != minv && arr[i] != maxv) {
@@ -74,12 +75,18 @@ namespace pHSensor {
             phArray[sampleCount] = analogRead(sensor_pin);
             sampleCount++;
             delay(PH_SAMPLING_INTERVAL);
+            //en el .h tiene hasta un maximo de 40 medidas o si transcurre 1 segundo termina de llenar el arreglo
+            //y toma muestras cada 20 ms
         }
         
         // Calcular promedio descartando extremos
         double avgRaw = averageArray(phArray, sampleCount);
         
         // Convertir a voltaje usando calibración ESP32
+        //chat sugiere inconsistencias en la respecto a la resolución entre
+        //analogReadResolution(12) pero el esp_adc_cal_characterize() se llamó con ADC_WIDTH_BIT_13
+        //mantener 12 bits para evitar errores (pendiente por verificar)
+        //ocurre misma discrepancia en initialize donde se usó adc_atten_db_11
         uint32_t voltage_mv = esp_adc_cal_raw_to_voltage((uint32_t)avgRaw, &adc_chars);
         float voltage_v = voltage_mv / 1000.0f;
         
@@ -99,6 +106,7 @@ namespace pHSensor {
         sensor_pin = pin;
         
         // Configurar ADC con calibración ESP32
+        //Aquí es donde están las discrepancias en el nivel de atenuación y resolución del adc
         analogReadResolution(ADC_BITS);
         analogSetPinAttenuation(sensor_pin, ADC_11db); // Para voltajes hasta 3.3V
         

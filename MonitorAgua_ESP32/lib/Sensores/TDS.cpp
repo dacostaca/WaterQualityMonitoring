@@ -11,8 +11,8 @@ namespace TDSSensor {
     esp_adc_cal_characteristics_t adc_chars;
     
     // Variables de calibración 
-    float kValue = TDS_CALIBRATED_KVALUE;        
-    float voltageOffset = TDS_CALIBRATED_VOFFSET; 
+    float kValue = TDS_CALIBRATED_KVALUE;       //factor de calibración de la celda 
+    float voltageOffset = TDS_CALIBRATED_VOFFSET; //ajuste de voltaje para compensar errores del sensor o ADC
     
     // Constantes del sensor 
     const float TDS_FACTOR = 0.5f;         // TDS = EC / 2
@@ -37,7 +37,7 @@ namespace TDSSensor {
         int validSamples = 0;
         
         for (int i = 0; i < SAMPLES; i++) {
-            int rawValue = analogRead(sensor_pin);
+            int rawValue = analogRead(sensor_pin);  
             if (rawValue >= 0 && rawValue <= ADC_MAX_VALUE) {
                 sum += rawValue;
                 validSamples++;
@@ -54,12 +54,15 @@ namespace TDSSensor {
         float voltage_v = (voltage_mv / 1000.0f) - voltageOffset;
         
         return voltage_v;
+        //toma n muestras, descarta valores fuera de rango y promedia los datos obtenidos de datos crudos 
+        //convierte a voltaje en mv y luego a voltaje en V y resta el offset
     }
     
     float compensateTemperature(float voltage, float temperature) {
         // Compensación de temperatura 
         float compensationFactor = 1.0f + TEMP_COEFFICIENT * (temperature - 25.0f);
         return voltage / compensationFactor;
+        //ajusta el voltaje respecto a la temperatura 
     }
     
     float calculateECRaw(float compensatedVoltage) {
@@ -67,13 +70,17 @@ namespace TDSSensor {
         return COEFF_A3 * compensatedVoltage * compensatedVoltage * compensatedVoltage +
                COEFF_A2 * compensatedVoltage * compensatedVoltage +
                COEFF_A1 * compensatedVoltage;
+               //convierte el voltaje compensado a una CONDUCTIVIDAD ELÉCTRICA
+               //polinomio cúbico de calibración de la librería original Gravity TDS
     }
     
     float calculateEC(float compensatedVoltage) {
+        // multiplica por el factor de calibración del electrodo kValue
         return calculateECRaw(compensatedVoltage) * kValue;
     }
     
     float calculateTDS(float ec) {
+        // convierte conductividad a TDS usando factor TDS (definido en 0.5)
         return ec * TDS_FACTOR;
     }
     
@@ -90,6 +97,8 @@ namespace TDSSensor {
         sensor_pin = pin;
         
         // Configurar ADC con calibración ESP32
+        //resolución de 12bits
+        //atenuación de 6db para medir hasta 2.2V (el sensor puede entregar hasta 2.0V)
         analogReadResolution(ADC_BITS);
         analogSetPinAttenuation(sensor_pin, ADC_6db); 
         
@@ -118,6 +127,7 @@ namespace TDSSensor {
     }
     
     TDSReading takeReadingWithTimeout(float temperature) {
+        //funcion principal para toma de datos
         TDSReading reading = {0};
         
         if (!initialized) {
