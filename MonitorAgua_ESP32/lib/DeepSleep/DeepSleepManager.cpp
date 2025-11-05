@@ -116,7 +116,7 @@ void DeepSleepManager::goToSleep(bool showCountdown) {
     if (showCountdown) {
         logf(" Entrando en Deep Sleep por %llu segundos...", sleepTime);
         logf("Ciclo: %llu min total (%llu min activo + %llu min sleep)", 
-             _sleepInterval/60, _activeTime/60, sleepTime/60);
+            _sleepInterval/60, _activeTime/60, sleepTime/60);
         
         log("==========================================");
         delay(100);  // Dar tiempo para que se envíe el mensaje

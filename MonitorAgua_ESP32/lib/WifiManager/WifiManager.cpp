@@ -2,6 +2,9 @@
 #include <stdarg.h>
 #include <time.h>
 
+
+extern MAX31328RTC rtcExterno;
+
 // Añadir variable para modo manual
 static bool manual_download_mode = true;  
 
@@ -11,10 +14,10 @@ WiFiManager* WiFiManager::_instance = nullptr;
 // Constructor
 WiFiManager::WiFiManager(bool enableSerial) 
     : _enableSerialOutput(enableSerial), _currentStatus(WIFI_DISCONNECTED),
-      _wifiInitialized(false), _websocketConnected(false), _connectionStartTime(0),
-      _totalDataSent(0), _lastErrorCode(0), _logCallback(nullptr), 
-      _errorCallback(nullptr), _statusCallback(nullptr), _rtcMemory(nullptr),
-      _watchdog(nullptr), _dataTransmissionComplete(false) {
+    _wifiInitialized(false), _websocketConnected(false), _connectionStartTime(0),
+    _totalDataSent(0), _lastErrorCode(0), _logCallback(nullptr), 
+    _errorCallback(nullptr), _statusCallback(nullptr), _rtcMemory(nullptr),
+    _watchdog(nullptr), _calibrationManager(nullptr), _dataTransmissionComplete(false) {
     
     // Configurar instancia estática para callback
     _instance = this;
@@ -56,10 +59,14 @@ void WiFiManager::setManagers(RTCMemoryManager* rtcMemory, WatchdogManager* watc
     log(" Referencias a managers configuradas");
 }
 
+void WiFiManager::setCalibrationManager(CalibrationManager* calibManager) {
+    _calibrationManager = calibManager;
+    log("✓ CalibrationManager configurado");
+}
+
 // Conectar WiFi
 bool WiFiManager::connectWiFi() {
     if (!_wifiInitialized) {
-        //aborta la conexión si no se ha inicializado con begin()
         reportError(WatchdogManager::ERROR_WIFI_FAIL, WatchdogManager::SEVERITY_CRITICAL, 1);
         return false;
     }
@@ -67,38 +74,23 @@ bool WiFiManager::connectWiFi() {
     updateStatus(WIFI_CONNECTING, "Conectando a WiFi...");
     log(" Conectando a WiFi...");
     
-    _connectionStartTime = millis(); //guarda instante de conexión
+    _connectionStartTime = millis();
     
-    // Intentar conectar
-    WiFi.begin(_config.ssid, _config.password); // Inicia conexión WiFi
+    WiFi.begin(_config.ssid, _config.password);
     
-    // Esperar conexión con timeout
     uint32_t startTime = millis();
     while (WiFi.status() != WL_CONNECTED) {
-        //se queda en bucle mientras no esté conectado y calcula el tiempo
-        //si excede el tiempo máximo de espera, aborta y marca error wifi
-        //reporta al watchdog
         uint32_t elapsed = millis() - startTime;
-        
         if (elapsed > _config.connect_timeout_ms) {
             logf(" Timeout conectando WiFi (%u ms)", elapsed);
             updateStatus(WIFI_ERROR, "Timeout WiFi");
             reportError(WatchdogManager::ERROR_WIFI_FAIL, WatchdogManager::SEVERITY_WARNING, elapsed);
             return false;
         }
-        
-        // Alimentar watchdog durante espera
-        if (_watchdog) {
-            //igual alimenta el watchdog para que no se reinicie
-            _watchdog->feedWatchdog();
-        }
-        
+
+        if (_watchdog) _watchdog->feedWatchdog();
         delay(100);
-        
-        // Log de progreso cada 2 segundos
-        if (elapsed % 2000 < 100) {
-            logf("⏳ Conectando WiFi... %u ms", elapsed);
-        }
+        if (elapsed % 2000 < 100) logf("⏳ Conectando WiFi... %u ms", elapsed);
     }
     
     uint32_t connectionTime = millis() - startTime;
@@ -107,9 +99,24 @@ bool WiFiManager::connectWiFi() {
     logf(" RSSI: %d dBm", WiFi.RSSI());
     
     updateStatus(WIFI_CONNECTED, "WiFi conectado");
-    
+
+    // 🕒 --- SINCRONIZAR RTC CON NTP ---
+    // Solo si el RTC está inicializado y el WiFi conectado
+    if (rtcExterno.isPresent() && rtcExterno.isRunning()) {
+        log("🌐 Sincronizando RTC con NTP (pool.ntp.org, UTC-5)...");
+        if (rtcExterno.syncWithNTP("pool.ntp.org", -5)) {  // UTC-5 = Colombia
+            log("✅ RTC sincronizado correctamente con NTP");
+        } else {
+            log("⚠ No se pudo sincronizar RTC con NTP");
+        }
+    } else {
+        log("⚠ RTC no disponible, no se intentó sincronizar");
+    }
+    // 🕒 --------------------------------
+
     return true;
 }
+
 
 // Conectar WebSocket
 bool WiFiManager::connectWebSocket() {
@@ -232,14 +239,14 @@ bool WiFiManager::sendStoredData(int maxReadings) {
     
     // Notificar inicio de envío
     String startMsg = "{\"action\":\"sending_data\",\"timestamp\":\"" + 
-                      String(millis()) + "\"}";
+                    String(millis()) + "\"}";
     _webSocket.sendTXT(startMsg);
     delay(100);
     
     // Obtener lecturas recientes
     //buffer local para 120 lecturas definidas aquí mismo, probar cambios para aumentar cantidad de muestras envíadas
     //trae las lecturas desde RTC Memory
-    RTCMemoryManager::SensorReading readings[120]; // Aumentar capacidad
+    RTCMemoryManager::SensorReading readings[160]; // Aumentar capacidad
     int count = _rtcMemory->getRecentReadings(readings, maxReadings);
     
     if (count == 0) {
@@ -365,63 +372,76 @@ bool WiFiManager::sendReading(const RTCMemoryManager::SensorReading &reading) {
 
 // Crear JSON para envío
 
-String WiFiManager::createDataJSON(const RTCMemoryManager::SensorReading &reading) {
+String WiFiManager::createDataJSON(const RTCMemoryManager::SensorReading &reading)
+{
     StaticJsonDocument<400> doc;
-    
+
     // Información del dispositivo
     doc["device_id"] = "ESP32_WaterMonitor";
     doc["timestamp"] = reading.timestamp;
     doc["rtc_timestamp"] = reading.rtc_timestamp;
     doc["reading_number"] = reading.reading_number;
     doc["sequence"] = _rtcMemory ? _rtcMemory->getSequenceNumber() : 0;
-    
-    if (reading.rtc_timestamp > 1609459200) {
-        time_t local_time = reading.rtc_timestamp;
-        struct tm* timeinfo = localtime(&local_time);
-        
-        char datetime_buffer[20];
-        char date_buffer[11];
-        char time_buffer[9];
-        
-        // Formatear fecha/hora completa
+
+    // Si el reading contiene rtc_timestamp válido, usarlo para la fecha legible.
+    // reading.rtc_timestamp es uint32_t unix time (segundos).
+    if (reading.rtc_timestamp != 0 && reading.rtc_timestamp > 1600000000UL)
+    {
+        time_t ts = (time_t)reading.rtc_timestamp;
+        struct tm timeinfo;
+        gmtime_r(&ts, &timeinfo); // usa UTC; si quieres local, usa localtime_r
+
+        char datetime_buffer[32];
+        char date_buffer[16];
+        char time_buffer[16];
         snprintf(datetime_buffer, sizeof(datetime_buffer), "%04d-%02d-%02d %02d:%02d:%02d",
-                timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday,
-                timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
-        
-        // Formatear solo fecha
+                timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,
+                timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
         snprintf(date_buffer, sizeof(date_buffer), "%04d-%02d-%02d",
-                timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday);
-        
-        // Formatear solo hora
+                timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday);
         snprintf(time_buffer, sizeof(time_buffer), "%02d:%02d:%02d",
-                timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
-        
+                timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+
         doc["rtc_datetime"] = String(datetime_buffer);
         doc["rtc_date"] = String(date_buffer);
         doc["rtc_time"] = String(time_buffer);
-    } else {
-        doc["rtc_datetime"] = "No disponible";
-        doc["rtc_date"] = "No disponible";
-        doc["rtc_time"] = "No disponible";
     }
-    
+    else
+    {
+        // Fallback: RTC o NTP no disponible -> dejar en "No disponible" o convertir timestamp relativo
+        if (reading.rtc_timestamp != 0)
+        {
+            // Si tienes un timestamp relativo (por ejemplo, segundos desde boot), podrías intentar convertir, pero
+            // preferimos no mentir y dejar "No disponible" para evitar confusiones.
+            doc["rtc_datetime"] = "No disponible";
+            doc["rtc_date"] = "No disponible";
+            doc["rtc_time"] = "No disponible";
+        }
+        else
+        {
+            doc["rtc_datetime"] = "No disponible";
+            doc["rtc_date"] = "No disponible";
+            doc["rtc_time"] = "No disponible";
+        }
+    }
+
     // Datos de sensores
     doc["temperature"] = reading.temperature;
     doc["ph"] = reading.ph;
     doc["turbidity"] = reading.turbidity;
     doc["tds"] = reading.tds;
-    doc["ec"] = reading.ec; 
+    doc["ec"] = reading.ec;
     doc["sensor_status"] = reading.sensor_status;
     doc["valid"] = reading.valid;
-    
+
     // Información del sistema
     doc["health_score"] = _watchdog ? _watchdog->getHealthScore() : 100;
     doc["rssi"] = WiFi.RSSI();
     doc["free_heap"] = ESP.getFreeHeap();
-    
+
     String output;
     serializeJson(doc, output);
-    
+
     return output;
 }
 
@@ -583,7 +603,7 @@ void WiFiManager::webSocketEvent(WStype_t type, uint8_t* payload, size_t length)
             
         case WStype_TEXT:
             _lastServerResponse = String((char*)payload);
-            
+            logf("WebSocket - Payload recibido: %s", _lastServerResponse.c_str());
             // En modo manual, solo mostrar mensajes importantes
             if (manual_download_mode) {
                 if (_lastServerResponse.indexOf("request_all_data") != -1) {
@@ -597,6 +617,34 @@ void WiFiManager::webSocketEvent(WStype_t type, uint8_t* payload, size_t length)
                 }
             } else {
                 logf(" Servidor responde: %s", _lastServerResponse.c_str());
+            }
+
+                // Procesar comandos de calibración
+            if (_calibrationManager && _lastServerResponse.indexOf("\"action\":\"calibrate\"") != -1) {
+                log("📝 Comando de calibración recibido");
+                
+                CalibrationManager::CalibrationResult result = 
+                    _calibrationManager->processCalibrationCommand(_lastServerResponse);
+                
+                String response;
+                if (result == CalibrationManager::CALIB_SUCCESS) {
+                    response = "{\"status\":\"success\",\"message\":\"Calibración actualizada\",\"calibration\":" + 
+                            _calibrationManager->getCalibrationJSON() + "}";
+                } else {
+                    response = "{\"status\":\"error\",\"code\":" + String(result) + 
+                            ",\"message\":\"Error en calibración\"}";
+                }
+                
+                _webSocket.sendTXT(response);
+            }
+            
+            // Solicitud de valores actuales
+            if (_calibrationManager && _lastServerResponse.indexOf("\"action\":\"get_calibration\"") != -1) {
+                log("📊 Solicitud de valores de calibración");
+                
+                String response = "{\"status\":\"success\",\"calibration\":" + 
+                                _calibrationManager->getCalibrationJSON() + "}";
+                _webSocket.sendTXT(response);
             }
             
             // Verificar si es confirmación de recepción

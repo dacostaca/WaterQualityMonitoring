@@ -8,12 +8,20 @@
 #include "RTCMemory.h"
 #include "WatchDogManager.h"
 #include "RTC.h"
+#include "CalibrationManager.h"
 
 /**
  * @brief Clase para manejo eficiente de WiFi y WebSocket en ESP32
  * 
  */
-class WiFiManager {
+
+struct CalibrationValues {
+    float ph_offset = 0.0f;
+    float ec_offset = 0.0f;
+    float turbidity_offset = 0.0f;
+    // Agrega más sensores según tu proyecto
+};
+ class WiFiManager {
 public:
     // ——— Estados de conexión ———
     typedef enum {
@@ -68,6 +76,7 @@ private:
     // ——— Referencias a otros managers ———
     RTCMemoryManager* _rtcMemory;
     WatchdogManager* _watchdog;
+    CalibrationManager* _calibrationManager;
     
     // ——— WebSocket ———
     WebSocketsClient _webSocket;
@@ -111,7 +120,7 @@ public:
      * @param maxReadings Máximo número de lecturas a enviar
      * @return true si envió exitosamente
      */
-    bool sendStoredData(int maxReadings = 120);
+    bool sendStoredData(int maxReadings = 160);
     
     /**
      * @brief Enviar una lectura específica
@@ -143,6 +152,12 @@ public:
      */
     bool isWiFiConnected();
     
+    /**
+     * @brief Configurar referencia al CalibrationManager
+     */
+    void setCalibrationManager(CalibrationManager* calibManager);
+
+
     /**
      * @brief Verificar si WebSocket está conectado
      * @return true si está conectado
@@ -189,7 +204,7 @@ public:
      * @param waitTimeout Timeout esperando solicitud (ms)
      * @return true si el proceso fue exitoso
      */
-    bool transmitDataManual(int maxReadings = 120, uint32_t waitTimeout = 60000);
+    bool transmitDataManual(int maxReadings = 160, uint32_t waitTimeout = 60000);
     
     /**
      * @brief Configurar modo de operación (manual o automático)
