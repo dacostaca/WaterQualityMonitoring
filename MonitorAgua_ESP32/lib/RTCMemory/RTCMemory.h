@@ -6,15 +6,31 @@
 #include <string.h>
 
 /**
+ * @file RTCMemory.h
+ * @brief Definición de la clase RTCMemoryManager para manejo de RTC Memory en ESP32.
+ * 
+ * Esta clase se enfoca únicamente en el almacenamiento persistente de datos en 
+ * la RTC Memory del ESP32, con soporte para validación CRC, buffer circular de 
+ * lecturas y funciones auxiliares de depuración.
+ * 
+ * @author Daniel Acosta - Santiago Erazo
+ * @version 1.0
+ * @date 2025-10-01
+ */
+
+/**
  * @brief Clase para manejo PURO de RTC Memory en ESP32
  * 
- * Esta clase se enfoca ÚNICAMENTE en el almacenamiento persistente de datos
- * en la RTC Memory del ESP32. 
- * 
+ * Implementa un sistema de almacenamiento circular y persistente en la RTC Memory
+ * del ESP32. Soporta validación de integridad mediante CRC, estructuras empaquetadas
+ * y herramientas de logging/debug.
  */
 class RTCMemoryManager {
 public:
-    
+
+    /**
+     * @brief Estructura que representa una lectura de sensores.
+     */
     typedef struct __attribute__((packed)) {
         uint32_t timestamp;         // Tiempo en milisegundos (desde boot)
         uint32_t rtc_timestamp;     // Timestamp Unix del RTC
@@ -28,7 +44,9 @@ public:
         bool valid;                 // Indica si la lectura es válida
     } SensorReading;
 
-    // ——— Estructura principal de datos RTC  ———
+    /**
+     * @brief Estructura principal de datos RTC persistentes.
+     */
     typedef struct __attribute__((packed)) {
         uint32_t magic_start;       // 0x12345678
         uint32_t sequence_number;   // Número de secuencia
@@ -47,7 +65,9 @@ private:
     
     bool _enableSerialOutput;
     
-    // Callback opcional para logging
+    /**
+     * @brief Callback opcional para logging externo.
+     */
     typedef void (*LogCallback)(const char* message);
     LogCallback _logCallback;
 

@@ -1,27 +1,61 @@
+/**
+ * @file RTCMemory.cpp
+ * @brief Implementación de la clase RTCMemoryManager para gestión de memoria RTC en ESP32.
+ *
+ * Este módulo administra la memoria RTC del ESP32 para almacenar y recuperar lecturas de sensores 
+ * de manera persistente entre reinicios o ciclos de energía. 
+ * Incluye validación de integridad con CRC, gestión de estructuras de datos, 
+ * almacenamiento circular de lecturas, recuperación cronológica y funciones de depuración.
+ *
+ * Dependencias:
+ *   - Arduino Core para ESP32
+ *   - Funciones de CRC hardware (esp_crc32_le)
+ *   - Librerías estándar de C para manejo de memoria y strings
+ *
+ * Funcionalidades principales:
+ *   - Almacenamiento y validación de lecturas de sensores
+ *   - Validación de integridad mediante magic numbers y CRC32
+ *   - Soporte de buffer circular con control de índices
+ *   - Recuperación de lecturas recientes y estado del sistema
+ *   - Reset completo de estructura RTC
+ *   - Logging configurable por Serial o callback externo
+ *
+ * @author Daniel Acosta - Santiago Erazo
+ * @version 1.0
+ * @date 2025-10-01
+ */
+
 #include "RTCMemory.h"
 #include <stdarg.h>
 
 // ——— Variables en RTC Memory ———
-RTC_DATA_ATTR RTCMemoryManager::RTCDataStructure rtc_data;
-RTC_DATA_ATTR int currentIndex = 0;
-RTC_DATA_ATTR uint16_t totalReadings = 0;
+RTC_DATA_ATTR RTCMemoryManager::RTCDataStructure rtc_data; /**< Estructura principal almacenada en memoria RTC */
+RTC_DATA_ATTR int currentIndex = 0; /**< Estructura principal almacenada en memoria RTC */
+RTC_DATA_ATTR uint16_t totalReadings = 0; /**< Total de lecturas almacenadas */
 
-// Constructor
+/**
+ * @brief Constructor de la clase.
+ * @param enableSerial Indica si se habilita la salida por Serial.
+ */
 RTCMemoryManager::RTCMemoryManager(bool enableSerial) 
     : _enableSerialOutput(enableSerial), _logCallback(nullptr) {
 }
 
-// Inicialización
+/**
+ * @brief Inicializa el sistema de memoria RTC y Serial si corresponde.
+ */
 void RTCMemoryManager::begin() {
     if (_enableSerialOutput && !Serial) {
         Serial.begin(115200);
         delay(100);
     }
-    
     //log(" RTC Memory Manager Inicializado ");
 }
 
-// Validar integridad de datos RTC
+/**
+ * @brief Valida la integridad de la memoria RTC.
+ * @return true si los datos son válidos, false en caso contrario.
+ */
 bool RTCMemoryManager::validateIntegrity() {
     //log(" Validando integridad RTC...");
     
@@ -58,6 +92,10 @@ bool RTCMemoryManager::validateIntegrity() {
     return true;
 }
 
+/**
+ * @brief Inicializa la estructura de memoria RTC con valores por defecto.
+ */
+
 // Inicializar datos RTC
 void RTCMemoryManager::initialize() {
     //log(" Inicializando estructura RTC...");
@@ -83,6 +121,11 @@ void RTCMemoryManager::initialize() {
     log(" RTC Memory inicializada correctamente");
 }
 
+/**
+ * @brief Almacena una lectura de sensor en la memoria RTC.
+ * @param reading Lectura de sensor a guardar.
+ * @return true si se almacena correctamente, false en caso contrario.
+ */
 // Almacenar lectura de sensores con validación
 bool RTCMemoryManager::storeReading(const SensorReading &reading) {
     if (!reading.valid) {
@@ -135,6 +178,16 @@ bool RTCMemoryManager::storeReading(const SensorReading &reading) {
     return true;
 }
 
+/**
+ * @brief Crea una lectura completa de sensores validada.
+ * @param temperature Temperatura en °C.
+ * @param ph Valor de pH.
+ * @param turbidity Turbidez.
+ * @param tds Sólidos disueltos totales (ppm).
+ * @param ec Conductividad eléctrica (µS/cm).
+ * @param sensorStatus Estado del sensor.
+ * @return Objeto SensorReading con validación de rangos.
+ */
 
 // Crear lectura completa
 RTCMemoryManager::SensorReading RTCMemoryManager::createFullReading(float temperature, float ph, float turbidity, float tds, float ec, uint8_t sensorStatus) {
@@ -161,23 +214,42 @@ RTCMemoryManager::SensorReading RTCMemoryManager::createFullReading(float temper
 }
 
 // Getters básicos
+
+/** @brief Obtiene el número total de lecturas almacenadas. */
 uint16_t RTCMemoryManager::getTotalReadings() { return totalReadings; }
+
+/** @brief Obtiene el índice actual del buffer circular. */
 int RTCMemoryManager::getCurrentIndex() { return currentIndex; }
+
+/** @brief Obtiene el número de secuencia actual. */
 uint32_t RTCMemoryManager::getSequenceNumber() { return rtc_data.sequence_number; }
 
-// Verificar si debe enviar datos
+
+
+/**
+ * @brief Verifica si se deben enviar datos según un umbral de lecturas.
+ * @param readingsThreshold Umbral de lecturas.
+ * @return true si se deben enviar, false de lo contrario.
+ */
+
 bool RTCMemoryManager::shouldSendData(int readingsThreshold) {
     return (totalReadings % readingsThreshold == 0) && (totalReadings > 0);
 }
 
-// Marcar datos enviados
+/**
+ * @brief Marca que los datos ya fueron enviados.
+ */
 void RTCMemoryManager::markDataSent() {
     rtc_data.sequence_number++;
     updateCRCs();
     log(" Datos marcados como enviados");
 }
 
-// Obtener última lectura
+/**
+ * @brief Obtiene la última lectura almacenada.
+ * @param reading Referencia donde se guarda la lectura.
+ * @return true si existe lectura válida, false en caso contrario.
+ */
 bool RTCMemoryManager::getLastReading(SensorReading &reading) {
     if (totalReadings == 0) {
         return false;
@@ -190,6 +262,13 @@ bool RTCMemoryManager::getLastReading(SensorReading &reading) {
 }
 
 // Obtener múltiples lecturas recientes
+/**
+ * @brief Recupera un conjunto de lecturas recientes desde la memoria RTC.
+ * 
+ * @param readings Arreglo de destino donde se almacenarán las lecturas.
+ * @param maxReadings Número máximo de lecturas a recuperar.
+ * @return int Cantidad de lecturas recuperadas correctamente.
+ */
 int RTCMemoryManager::getRecentReadings(SensorReading readings[], int maxReadings) {
     int count = 0;
     int totalAvailable = (totalReadings < MAX_READINGS) ? totalReadings : MAX_READINGS;
@@ -229,8 +308,12 @@ int RTCMemoryManager::getRecentReadings(SensorReading readings[], int maxReading
     return count;
 }
 
-
 // Mostrar lecturas almacenadas
+/**
+ * @brief Muestra en el log las últimas lecturas almacenadas en la memoria RTC.
+ * 
+ * @param numReadings Cantidad de lecturas a mostrar.
+ */
 void RTCMemoryManager::displayStoredReadings(int numReadings) {
     log("\n --- DATOS ALMACENADOS EN RTC MEMORY ---");
     logf("Total lecturas: %d | Posición actual: %d", 
@@ -261,6 +344,9 @@ void RTCMemoryManager::displayStoredReadings(int numReadings) {
 }
 
 // Reset completo
+/**
+ * @brief Fuerza un reinicio completo de la memoria RTC eliminando todo su contenido.
+ */
 void RTCMemoryManager::forceCompleteReset() {
     log(" FORZANDO RESET COMPLETO DEL SISTEMA...");
     log(" Todos los datos RTC serán eliminados");
@@ -275,6 +361,11 @@ void RTCMemoryManager::forceCompleteReset() {
 }
 
 // Obtener estado
+/**
+ * @brief Devuelve un resumen del estado del administrador de memoria RTC.
+ * 
+ * @return String Estado formateado en texto.
+ */
 String RTCMemoryManager::getStatus() {
     String status = "=== RTC Memory Manager Status ===\n";
     status += "Total lecturas: " + String(totalReadings) + "\n";
@@ -289,6 +380,11 @@ String RTCMemoryManager::getStatus() {
 }
 
 // Obtener uso de memoria
+/**
+ * @brief Devuelve información sobre el uso actual de la memoria RTC.
+ * 
+ * @return String Informe de uso de memoria.
+ */
 String RTCMemoryManager::getMemoryUsage() {
     String usage = "=== Memory Usage ===\n";
     usage += "Estructura RTC: " + String(sizeof(RTCDataStructure)) + " bytes\n";
@@ -305,34 +401,63 @@ String RTCMemoryManager::getMemoryUsage() {
 }
 
 // Habilitar/deshabilitar Serial
+/**
+ * @brief Habilita o deshabilita la salida de logs por Serial.
+ * 
+ * @param enable True para habilitar, False para deshabilitar.
+ */
 void RTCMemoryManager::enableSerial(bool enable) {
     _enableSerialOutput = enable;
 }
 
 // Configurar callback de logging
+/**
+ * @brief Configura un callback para redirigir los mensajes de logging.
+ * 
+ * @param callback Función de tipo LogCallback.
+ */
 void RTCMemoryManager::setLogCallback(LogCallback callback) {
     _logCallback = callback;
 }
 
 // Verificar si está inicializada
+/**
+ * @brief Verifica si la memoria RTC está correctamente inicializada.
+ * 
+ * @return true Si la memoria está inicializada.
+ * @return false Si no lo está.
+ */
 bool RTCMemoryManager::isInitialized() {
     return (rtc_data.magic_start == MAGIC_START && rtc_data.magic_end == MAGIC_END);
 }
 
 // ——— MÉTODOS PRIVADOS ———
 
-// Calcular CRC32
+/**
+ * @brief Calcula el CRC32 de un bloque de datos dado.
+ * 
+ * @param data Puntero al bloque de datos.
+ * @param length Longitud del bloque de datos en bytes.
+ * @return uint32_t Valor del CRC32 calculado.
+ */
 uint32_t RTCMemoryManager::calculateCRC32(const void* data, size_t length) {
     return esp_crc32_le(0xFFFFFFFF, (const uint8_t*)data, length) ^ 0xFFFFFFFF;
 }
 
-// Actualizar CRCs
+/**
+ * @brief Actualiza los CRCs de cabecera y de datos en la estructura RTC.
+ */
 void RTCMemoryManager::updateCRCs() {
     rtc_data.header_crc = calculateCRC32(&rtc_data.sequence_number, sizeof(uint32_t) * 2);
     rtc_data.data_crc = calculateCRC32(&rtc_data.readings, sizeof(rtc_data.readings));
 }
 
-// Validar rangos lógicos
+/**
+ * @brief Valida los rangos lógicos de los índices y contadores en memoria.
+ * 
+ * @return true Si los rangos son válidos.
+ * @return false Si se detecta alguna inconsistencia.
+ */
 bool RTCMemoryManager::validateLogicalRanges() {
     if (currentIndex < 0 || currentIndex >= MAX_READINGS) {
         logf(" currentIndex fuera de rango: %d", currentIndex);
@@ -348,6 +473,11 @@ bool RTCMemoryManager::validateLogicalRanges() {
 }
 
 // Métodos privados de logging
+/**
+ * @brief Envía un mensaje de log simple ya sea por callback o por Serial.
+ * 
+ * @param message Cadena de texto a mostrar.
+ */
 void RTCMemoryManager::log(const char* message) {
     if (_logCallback) {
         _logCallback(message);
@@ -356,6 +486,12 @@ void RTCMemoryManager::log(const char* message) {
     }
 }
 
+/**
+ * @brief Envía un mensaje de log formateado usando printf-style.
+ * 
+ * @param format Cadena de formato (similar a printf).
+ * @param ... Argumentos variables para completar el formato.
+ */
 void RTCMemoryManager::logf(const char* format, ...) {
     char buffer[256];
     va_list args;

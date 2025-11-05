@@ -1,3 +1,16 @@
+/**
+ * @file DeepSleepManager.h
+ * @brief Definición de la clase DeepSleepManager para gestión del modo Deep Sleep en ESP32.
+ * 
+ * Esta clase permite configurar, controlar y monitorear el modo Deep Sleep del ESP32.
+ * Incluye funciones para definir intervalos de sueño, tiempo activo, causas de despertar,
+ * configuración de wakeup por temporizador o GPIO, y generación de logs.
+ * 
+ * @version 1.0
+ * @date 2025-10-01
+ * @author Daniel Acosta - Santiago Erazo
+ */
+
 #ifndef DEEPSLEEP_MANAGER_H
 #define DEEPSLEEP_MANAGER_H
 
@@ -5,6 +18,7 @@
 #include "esp_sleep.h"
 
 /**
+ * @class DeepSleepManager
  * @brief Clase para manejo de Deep Sleep en ESP32
  * 
  * Esta clase encapsula todas las funcionalidades relacionadas con 
@@ -19,7 +33,12 @@ private:
     uint64_t _activeTime;           ///< Tiempo activo por ciclo en segundos
     bool _enableSerialOutput;       ///< Habilitar salida por Serial
     
-    // Callback opcional para logging
+/**
+ * @brief Definición de tipo para callback de logging.
+ * 
+ * El callback permite redirigir los mensajes de log a una función
+ * definida por el usuario.
+ */       
     typedef void (*LogCallback)(const char* message);
     LogCallback _logCallback;
 

@@ -1,14 +1,47 @@
+/**
+ * @file WifiManager.cpp
+ * @brief Implementación del gestor de WiFi y WebSocket para ESP32
+ * @details Este archivo contiene la lógica completa para gestión de conexiones WiFi,
+ *          comunicación WebSocket con servidor remoto, envío de datos de sensores en
+ *          formato JSON, y dos modos de operación: automático (envío inmediato) y
+ *          manual (espera solicitud del servidor). Integrado con RTCMemory para
+ *          acceso a datos almacenados y WatchdogManager para monitoreo de salud.
+ * @author Daniel Acosta - Santiago Erazo
+ * @date 01/10/2025
+ * @version 1.0
+ */
+
 #include "WifiManager.h"
 #include <stdarg.h>
 #include <time.h>
 
 // Añadir variable para modo manual
+
+/**
+ * @var manual_download_mode
+ * @brief Bandera global para modo de operación manual
+ * @details true: Modo manual (espera solicitud del servidor antes de enviar)
+ *          false: Modo automático (envía datos inmediatamente al conectar)
+ * @note Variable estática de archivo para evitar contaminación de namespace global.
+ */
 static bool manual_download_mode = true;  
 
 // Variable estática para acceso desde callback
+
+/**
+ * @var WiFiManager::_instance
+ * @brief Puntero estático a la instancia del WiFiManager para callback WebSocket
+ * @details Necesario porque la librería WebSocketsClient requiere callback estático,
+ *          pero necesitamos acceder a métodos de instancia. Patrón Singleton.
+ */
 WiFiManager* WiFiManager::_instance = nullptr;
 
-// Constructor
+/**
+ * @brief Constructor de WiFiManager
+ * @param enableSerial Habilitar salida por Serial (default: true)
+ * @note Constructor no inicializa WiFi hardware. Llamar begin() en setup().
+ * @note Configura _instance estática para callback WebSocket.
+ */
 WiFiManager::WiFiManager(bool enableSerial) 
     : _enableSerialOutput(enableSerial), _currentStatus(WIFI_DISCONNECTED),
       _wifiInitialized(false), _websocketConnected(false), _connectionStartTime(0),
@@ -20,7 +53,19 @@ WiFiManager::WiFiManager(bool enableSerial)
     _instance = this;
 }
 
-// Inicialización
+/**
+ * @brief Inicializa el WiFiManager con configuración WiFi y WebSocket
+ * @param config Estructura con SSID, password, servidor, puertos y timeouts
+ * @details Proceso:
+ *          1. Guarda configuración en _config
+ *          2. Inicializa Serial si está habilitado
+ *          3. Imprime parámetros de configuración
+ *          4. Configura WiFi en modo Station (WIFI_STA)
+ *          5. Configura callback lambda para eventos WebSocket
+ *          6. Marca como inicializado
+ * @note Debe llamarse una vez en setup() antes de cualquier operación WiFi.
+ * @note Modo manual por defecto (ver manual_download_mode).
+ */
 void WiFiManager::begin(const wifi_config_t &config) {
     _config = config;
     
@@ -49,6 +94,13 @@ void WiFiManager::begin(const wifi_config_t &config) {
 }
 
 // Configurar managers
+/**
+ * @brief Configura referencias a RTCMemoryManager y WatchdogManager
+ * @param rtcMemory Puntero a RTCMemoryManager para acceso a datos almacenados
+ * @param watchdog Puntero a WatchdogManager para monitoreo de salud y errores
+ * @note Método para inyección de dependencias, facilita testing y desacoplamiento.
+ * @warning Los punteros deben apuntar a objetos válidos durante vida útil del WiFiManager.
+ */
 void WiFiManager::setManagers(RTCMemoryManager* rtcMemory, WatchdogManager* watchdog) {
     //metodo para configurar referencias a otros managers dando acceso a rtc y al watchdog
     _rtcMemory = rtcMemory;
@@ -56,7 +108,20 @@ void WiFiManager::setManagers(RTCMemoryManager* rtcMemory, WatchdogManager* watc
     log(" Referencias a managers configuradas");
 }
 
-// Conectar WiFi
+/**
+ * @brief Conecta a red WiFi con timeout configurado
+ * @return true si conexión exitosa, false si timeout o error
+ * @details Proceso:
+ *          1. Verifica inicialización previa con begin()
+ *          2. Actualiza estado a WIFI_CONNECTING
+ *          3. Inicia conexión con WiFi.begin()
+ *          4. Espera conexión en bucle con timeout
+ *          5. Alimenta watchdog durante espera
+ *          6. Imprime progreso cada 2 segundos
+ *          7. Al conectar, imprime IP, RSSI y tiempo de conexión
+ * @note Función bloqueante hasta conectar o timeout (connect_timeout_ms).
+ * @note Si falla, reporta ERROR_WIFI_FAIL al watchdog como warning.
+ */
 bool WiFiManager::connectWiFi() {
     if (!_wifiInitialized) {
         //aborta la conexión si no se ha inicializado con begin()
@@ -112,6 +177,21 @@ bool WiFiManager::connectWiFi() {
 }
 
 // Conectar WebSocket
+/**
+ * @brief Conecta WebSocket al servidor configurado con timeout
+ * @return true si conexión exitosa, false si timeout o error
+ * @details Proceso:
+ *          1. Verifica conexión WiFi activa
+ *          2. Actualiza estado a WEBSOCKET_CONNECTING
+ *          3. Configura WebSocket con begin() y setReconnectInterval()
+ *          4. Espera conexión en bucle con timeout
+ *          5. Procesa eventos con _webSocket.loop()
+ *          6. Alimenta watchdog durante espera
+ *          7. Imprime progreso cada 1 segundo
+ * @note Función bloqueante hasta conectar o timeout (websocket_timeout_ms).
+ * @note La conexión real se detecta mediante callback webSocketEvent().
+ * @note Si falla, reporta ERROR_WIFI_FAIL al watchdog como warning.
+ */
 bool WiFiManager::connectWebSocket() {
     if (!isWiFiConnected()) {
         //verificca conexión wifi activa
@@ -168,6 +248,21 @@ bool WiFiManager::connectWebSocket() {
 }
 
 // función para esperar solicitud de datos
+/**
+ * @brief Espera solicitud de descarga de datos del servidor (modo manual)
+ * @param timeout_ms Tiempo máximo de espera en milisegundos (default: 60000 = 1 min)
+ * @return true si se recibió solicitud "request_all_data", false si timeout
+ * @details Proceso:
+ *          1. Verifica conexión WebSocket activa
+ *          2. Actualiza estado y loguea espera
+ *          3. Bucle procesando eventos WebSocket con loop()
+ *          4. Busca "request_all_data" en _lastServerResponse
+ *          5. Alimenta watchdog durante espera
+ *          6. Muestra status cada 5 segundos
+ * @note Función bloqueante hasta recibir solicitud o timeout.
+ * @note Limpia _lastServerResponse al recibir solicitud.
+ * @note Esencial para modo manual (esperar comando del servidor).
+ */
 bool WiFiManager::waitForDataRequest(uint32_t timeout_ms) {
     if (!isWebSocketConnected()) {
         //confirma conexión websocket activa
@@ -216,6 +311,25 @@ bool WiFiManager::waitForDataRequest(uint32_t timeout_ms) {
 }
 
 // Enviar datos con notificación de inicio/fin
+/**
+ * @brief Envía todos los datos almacenados en RTC Memory al servidor
+ * @param maxReadings Número máximo de lecturas a enviar (default: 120)
+ * @return true si envío exitoso (total o parcial), false si error crítico
+ * @details Proceso completo:
+ *          1. Verifica WebSocket conectado y RTCMemory configurada
+ *          2. Notifica inicio de envío con mensaje JSON "sending_data"
+ *          3. Obtiene lecturas recientes desde RTCMemory
+ *          4. Si no hay datos, notifica "data_complete" con total:0
+ *          5. Envía cada lectura individualmente con sendReading()
+ *          6. Alimenta watchdog durante envío
+ *          7. Muestra progreso cada 10 lecturas
+ *          8. Verifica timeout general (websocket_timeout_ms × 3)
+ *          9. Notifica fin con "data_complete" y total enviado
+ *          10. Marca datos como enviados en RTCMemory
+ * @note Buffer local de 120 lecturas. Modificar para mayor capacidad si necesario.
+ * @note Éxito parcial: Si se envió al menos 1 lectura, retorna true y marca enviados.
+ * @warning Función bloqueante. Puede tardar varios minutos con muchas lecturas.
+ */
 bool WiFiManager::sendStoredData(int maxReadings) {
     if (!isWebSocketConnected()) {
         log(" WebSocket no conectado");
@@ -326,6 +440,16 @@ bool WiFiManager::sendStoredData(int maxReadings) {
 }
 
 // Enviar una lectura específica 
+/**
+ * @brief Envía una lectura de sensor específica al servidor vía WebSocket
+ * @param reading Estructura SensorReading a enviar
+ * @return true si envío exitoso, false si error
+ * @details Comportamiento depende del modo:
+ *          - Modo manual: Envía sin esperar confirmación individual (delay 20ms)
+ *          - Modo automático: Espera confirmación del servidor (timeout 3s)
+ * @note En modo manual, asume éxito si no hay error de envío (optimización).
+ * @note En modo automático, verifica "success" o "received" en respuesta del servidor.
+ */
 bool WiFiManager::sendReading(const RTCMemoryManager::SensorReading &reading) {
     if (!isWebSocketConnected()) {
         return false;
@@ -365,6 +489,25 @@ bool WiFiManager::sendReading(const RTCMemoryManager::SensorReading &reading) {
 
 // Crear JSON para envío
 
+/**
+ * @brief Crea mensaje JSON con datos de lectura y metadata del sistema
+ * @param reading Estructura SensorReading a serializar
+ * @return String con JSON formateado
+ * @details Campos incluidos en JSON:
+ *          - device_id: Identificador del dispositivo
+ *          - timestamp: millis() de la lectura
+ *          - rtc_timestamp: Timestamp Unix del RTC
+ *          - rtc_datetime/date/time: Fecha/hora formateada (si RTC válido)
+ *          - reading_number: Número secuencial de lectura
+ *          - sequence: Número de secuencia de RTCMemory
+ *          - temperature, ph, turbidity, tds, ec: Datos de sensores
+ *          - sensor_status, valid: Estado de sensores
+ *          - health_score: Salud del sistema (watchdog)
+ *          - rssi: Intensidad señal WiFi
+ *          - free_heap: Memoria libre
+ * @note Buffer StaticJsonDocument<400> (400 bytes). Aumentar si JSON más grande.
+ * @note Si rtc_timestamp inválido (<2021), muestra "No disponible".
+ */
 String WiFiManager::createDataJSON(const RTCMemoryManager::SensorReading &reading) {
     StaticJsonDocument<400> doc;
     
@@ -425,7 +568,16 @@ String WiFiManager::createDataJSON(const RTCMemoryManager::SensorReading &readin
     return output;
 }
 
-// Desconectar
+/**
+ * @brief Desconecta WiFi, WebSocket y apaga radio WiFi (modo bajo consumo)
+ * @details Secuencia de desconexión:
+ *          1. Cierra WebSocket si está conectado
+ *          2. Desconecta WiFi si está conectado
+ *          3. Apaga radio WiFi con WiFi.mode(WIFI_OFF)
+ *          4. Actualiza estado a WIFI_DISCONNECTED
+ * @note Importante para ahorro de energía antes de deep sleep.
+ * @note WiFi.mode(WIFI_OFF) reduce consumo significativamente.
+ */
 void WiFiManager::disconnect() {
     log("🔌 Desconectando WiFi...");
     
@@ -448,6 +600,22 @@ void WiFiManager::disconnect() {
 }
 
 // Proceso manual de transmisión
+/**
+ * @brief Proceso completo de transmisión en modo manual
+ * @param maxReadings Número máximo de lecturas a enviar (default: 120)
+ * @param waitTimeout Timeout esperando solicitud del servidor en ms (default: 60000 = 1 min)
+ * @return true si proceso exitoso (incluso si no había datos), false si error crítico
+ * @details Secuencia completa:
+ *          1. Conecta WiFi con connectWiFi()
+ *          2. Conecta WebSocket con connectWebSocket()
+ *          3. Espera solicitud del servidor con waitForDataRequest()
+ *          4. Si hay solicitud, envía datos con sendStoredData()
+ *          5. Si no hay solicitud, considera éxito (conexión OK)
+ *          6. Siempre desconecta al final con disconnect()
+ *          7. Registra éxito/fallo en watchdog
+ * @note Diseñado para ciclos de deep sleep donde servidor controla cuándo descargar.
+ * @note Éxito si conecta aunque no haya solicitud (permite verificar conectividad).
+ */
 bool WiFiManager::transmitDataManual(int maxReadings, uint32_t waitTimeout) {
     log("\n === INICIANDO TRANSMISIÓN MANUAL ===");
     
@@ -508,6 +676,21 @@ bool WiFiManager::transmitDataManual(int maxReadings, uint32_t waitTimeout) {
 }
 
 // Proceso automático original 
+/**
+ * @brief Proceso completo de transmisión en modo automático (envío inmediato)
+ * @param maxReadings Número máximo de lecturas a enviar (default: 10)
+ * @return true si proceso exitoso, false si error
+ * @details Secuencia completa:
+ *          1. Desactiva temporalmente modo manual
+ *          2. Conecta WiFi con connectWiFi()
+ *          3. Conecta WebSocket con connectWebSocket()
+ *          4. Envía datos inmediatamente con sendStoredData()
+ *          5. Siempre desconecta al final con disconnect()
+ *          6. Restaura modo manual anterior
+ *          7. Registra éxito/fallo en watchdog
+ * @note NO espera solicitud del servidor, envía inmediatamente al conectar.
+ * @note Útil para envío urgente o testing sin servidor configurado.
+ */
 bool WiFiManager::transmitData(int maxReadings) {
     // Desactivar modo manual temporalmente
     bool previousMode = manual_download_mode;
@@ -567,6 +750,19 @@ bool WiFiManager::transmitData(int maxReadings) {
 }
 
 // Event handler del WebSocket
+/**
+ * @brief Callback para eventos del WebSocket (conectar, desconectar, recibir mensaje, error)
+ * @param type Tipo de evento WebSocket (ver WStype_t)
+ * @param payload Datos del evento (mensaje, URL, etc.)
+ * @param length Longitud de payload en bytes
+ * @details Maneja eventos:
+ *          - WStype_DISCONNECTED: Marca _websocketConnected=false, actualiza estado a error
+ *          - WStype_CONNECTED: Marca _websocketConnected=true, actualiza estado a conectado
+ *          - WStype_TEXT: Procesa mensaje del servidor, detecta "request_all_data" y "success"
+ *          - WStype_ERROR: Loguea error, actualiza estado, reporta a watchdog
+ * @note En modo manual, filtra mensajes para mostrar solo importantes (reduce spam logs).
+ * @note Callback llamado automáticamente por _webSocket.loop().
+ */
 void WiFiManager::webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
     switch(type) {
         case WStype_DISCONNECTED:
@@ -618,29 +814,54 @@ void WiFiManager::webSocketEvent(WStype_t type, uint8_t* payload, size_t length)
 }
 
 // Configurar modo de operación
+/**
+ * @brief Configura modo de operación (manual o automático)
+ * @param manual true para modo manual (espera solicitud), false para automático
+ * @note Afecta comportamiento de transmitDataManual() vs transmitData().
+ */
 void WiFiManager::setManualMode(bool manual) {
     manual_download_mode = manual;
     logf(" Modo descarga: %s", manual ? "MANUAL" : "AUTOMÁTICO");
 }
 
 // Obtener modo actual
+/**
+ * @brief Obtiene modo actual de operación
+ * @return true si está en modo manual, false si automático
+ */
 bool WiFiManager::isManualMode() {
     return manual_download_mode;
 }
 
 // Getters y utilidades (sin cambios)
+/**
+ * @brief Verifica si WiFi está conectado actualmente
+ * @return true si WiFi.isConnected() retorna true
+ */
 bool WiFiManager::isWiFiConnected() {
     return WiFi.isConnected();
 }
 
+/**
+ * @brief Verifica si WebSocket está conectado actualmente
+ * @return true si _websocketConnected es true (actualizado por callback)
+ */
 bool WiFiManager::isWebSocketConnected() {
     return _websocketConnected;
 }
 
+/**
+ * @brief Obtiene estado actual de conexión
+ * @return Enum wifi_status_t con estado actual
+ */
 WiFiManager::wifi_status_t WiFiManager::getStatus() {
     return _currentStatus;
 }
 
+/**
+ * @brief Obtiene descripción textual del estado actual
+ * @return String con descripción legible del estado
+ */
 String WiFiManager::getStatusString() {
     switch(_currentStatus) {
         case WIFI_DISCONNECTED: return "Desconectado";
@@ -657,6 +878,10 @@ String WiFiManager::getStatusString() {
     }
 }
 
+/**
+ * @brief Obtiene información detallada de conexión WiFi
+ * @return String con IP, RSSI y SSID si conectado, "WiFi desconectado" si no
+ */
 String WiFiManager::getConnectionInfo() {
     if (isWiFiConnected()) {
         String info = "IP: " + WiFi.localIP().toString();
@@ -667,6 +892,10 @@ String WiFiManager::getConnectionInfo() {
     return "WiFi desconectado";
 }
 
+/**
+ * @brief Obtiene estadísticas completas de transmisión
+ * @return String formateado con estado, modo, datos enviados, errores y conexión
+ */
 String WiFiManager::getTransmissionStats() {
     String stats = "=== Estadísticas WiFi ===\n";
     stats += "Estado: " + getStatusString() + "\n";
@@ -679,23 +908,46 @@ String WiFiManager::getTransmissionStats() {
 }
 
 // Configurar callbacks
+/**
+ * @brief Configura callback personalizado para logging
+ * @param callback Función con firma: void(const char* message)
+ */
 void WiFiManager::setLogCallback(LogCallback callback) {
     _logCallback = callback;
 }
 
+/**
+ * @brief Configura callback para notificación de errores
+ * @param callback Función con firma: void(error_code_t, error_severity_t, uint32_t)
+ */
 void WiFiManager::setErrorCallback(ErrorCallback callback) {
     _errorCallback = callback;
 }
 
+/**
+ * @brief Configura callback para cambios de estado
+ * @param callback Función con firma: void(wifi_status_t, const char*)
+ */
 void WiFiManager::setStatusCallback(StatusCallback callback) {
     _statusCallback = callback;
 }
 
+/**
+ * @brief Habilita o deshabilita salida por Serial
+ * @param enable true para habilitar, false para modo silencioso
+ */
 void WiFiManager::enableSerial(bool enable) {
     _enableSerialOutput = enable;
 }
 
 // Métodos privados
+
+/**
+ * @brief Actualiza estado interno y notifica mediante callback si configurado
+ * @param status Nuevo estado wifi_status_t
+ * @param message Mensaje descriptivo opcional
+ * @note Siempre loguea cambio de estado con formato "Estado: X - Mensaje".
+ */
 void WiFiManager::updateStatus(wifi_status_t status, const char* message) {
     _currentStatus = status;
     
@@ -708,6 +960,13 @@ void WiFiManager::updateStatus(wifi_status_t status, const char* message) {
     }
 }
 
+/**
+ * @brief Reporta error al watchdog y mediante callback si configurados
+ * @param code Código de error watchdog
+ * @param severity Severidad del error
+ * @param context Información contextual
+ * @note Guarda código en _lastErrorCode para estadísticas.
+ */
 void WiFiManager::reportError(WatchdogManager::error_code_t code, WatchdogManager::error_severity_t severity, uint32_t context) {
     _lastErrorCode = code;
     
@@ -720,6 +979,10 @@ void WiFiManager::reportError(WatchdogManager::error_code_t code, WatchdogManage
     }
 }
 
+/**
+ * @brief Envía mensaje de log mediante callback o Serial
+ * @param message Cadena de texto a imprimir
+ */
 void WiFiManager::log(const char* message) {
     if (_logCallback) {
         _logCallback(message);
@@ -728,6 +991,12 @@ void WiFiManager::log(const char* message) {
     }
 }
 
+/**
+ * @brief Envía mensaje de log con formato estilo printf
+ * @param format Cadena de formato printf
+ * @param ... Argumentos variables para format
+ * @note Buffer interno de 256 caracteres. Mensajes más largos se truncan.
+ */
 void WiFiManager::logf(const char* format, ...) {
     char buffer[256];
     va_list args;

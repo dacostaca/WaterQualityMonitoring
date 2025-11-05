@@ -1,3 +1,16 @@
+/**
+ * @file RTC.h
+ * @brief Definición de la clase MAX31328RTC para manejo del RTC MAX31328 en ESP32.
+ * 
+ * Esta librería proporciona una interfaz simplificada para interactuar con el RTC MAX31328 a través de I2C. 
+ * Incluye funciones para inicialización, configuración de fecha/hora, obtención de timestamps Unix, 
+ * lectura de temperatura interna, sincronización con NTP y depuración.
+ * 
+ * @author Daniel Acosta - Santiago Erazo
+ * @version 1.0
+ * @date 2025-10-01
+ */
+
 #ifndef MAX31328RTC_H
 #define MAX31328RTC_H
 
@@ -28,6 +41,8 @@
 
 /**
  * @brief Clase simplificada para MAX31328 RTC compatible con ESP32
+ * Implementa funciones de configuración y lectura de tiempo, 
+ * Lectura de temperatura interna, sincronización NTP y depuración.
  * Basada en el datasheet oficial y optimizada para uso con sensores de agua
  */
 class MAX31328RTC {

@@ -1,10 +1,39 @@
+/**
+ * @file RTC.cpp
+ * @brief Implementación de la clase MAX31328RTC para manejo del RTC mediante I2C.
+ * 
+ * Este archivo contiene la implementación de la clase MAX31328RTC, que provee
+ * funciones para inicialización, verificación, lectura y escritura de fecha y hora,
+ * sincronización con NTP, obtención de temperatura interna, depuración y utilidades.
+ * 
+ * @version 1.0
+ * @date 2025-10-01
+ * @author Daniel Acosta - Santiago Erazo
+ */
+
 #include "RTC.h"
 
+/**
+ * @brief Constructor de la clase MAX31328RTC.
+ * 
+ * Inicializa valores por defecto para dirección I2C y estado de inicialización.
+ */
 MAX31328RTC::MAX31328RTC() {
     i2c_address = MAX31328_I2C_ADDRESS;
     initialized = false;
 }
 
+/**
+ * @brief Inicializa el dispositivo RTC en el bus I2C.
+ * 
+ * Configura los pines, velocidad I2C y verifica presencia y oscilador.
+ * 
+ * @param sda_pin Pin SDA.
+ * @param scl_pin Pin SCL.
+ * @param address Dirección I2C del dispositivo.
+ * @return true si la inicialización fue exitosa.
+ * @return false si hubo error.
+ */
 bool MAX31328RTC::begin(int sda_pin, int scl_pin, uint8_t address) {
     i2c_address = address;
     
@@ -48,6 +77,12 @@ bool MAX31328RTC::begin(int sda_pin, int scl_pin, uint8_t address) {
     return true;
 }
 
+/**
+ * @brief Verifica si el dispositivo está presente en el bus I2C.
+ * @return true si responde en la dirección I2C.
+ * @return false si no responde o hay error.
+ */
+
 bool MAX31328RTC::isPresent() {
     Wire.beginTransmission(i2c_address);
     uint8_t error = Wire.endTransmission();
@@ -84,6 +119,11 @@ bool MAX31328RTC::isPresent() {
     return false;
 }
 
+/**
+ * @brief Verifica si el oscilador está en funcionamiento.
+ * @return true si está corriendo, false si está detenido.
+ */
+
 bool MAX31328RTC::isRunning() {
     if (!initialized && !isPresent()) {
         return false;
@@ -99,6 +139,11 @@ bool MAX31328RTC::isRunning() {
     
     return running;
 }
+
+/**
+ * @brief Inicia el oscilador del RTC.
+ * @return true si se inició correctamente.
+ */
 
 bool MAX31328RTC::startOscillator() {
     Serial.println("MAX31328: Iniciando oscilador...");
@@ -126,16 +171,37 @@ bool MAX31328RTC::startOscillator() {
     return isRunning();
 }
 
+/**
+ * @brief Indica si el RTC perdió el tiempo (flag OSF activo).
+ * @return true si perdió el tiempo.
+ */
+
 bool MAX31328RTC::hasLostTime() {
     uint8_t status = readRegister(MAX31328_REG_STATUS);
     return (status & MAX31328_STAT_OSF) != 0;
 }
+
+/**
+ * @brief Limpia el flag de pérdida de tiempo (OSF).
+ * @return true si fue exitoso.
+ */
 
 bool MAX31328RTC::clearLostTimeFlag() {
     uint8_t status = readRegister(MAX31328_REG_STATUS);
     status &= ~MAX31328_STAT_OSF; // Limpiar bit OSF
     return writeRegister(MAX31328_REG_STATUS, status);
 }
+
+/**
+ * @brief Configura fecha y hora manualmente.
+ * @param year Año (2000-2099).
+ * @param month Mes (1-12).
+ * @param day Día (1-31).
+ * @param hour Hora (0-23).
+ * @param minute Minuto (0-59).
+ * @param second Segundo (0-59).
+ * @return true si se configuró correctamente.
+ */
 
 bool MAX31328RTC::setDateTime(uint16_t year, uint8_t month, uint8_t day, 
                               uint8_t hour, uint8_t minute, uint8_t second) {
@@ -178,6 +244,17 @@ bool MAX31328RTC::setDateTime(uint16_t year, uint8_t month, uint8_t day,
     return true;
 }
 
+/**
+ * @brief Obtiene la fecha y hora actual.
+ * @param year Referencia para año.
+ * @param month Referencia para mes.
+ * @param day Referencia para día.
+ * @param hour Referencia para hora.
+ * @param minute Referencia para minuto.
+ * @param second Referencia para segundo.
+ * @return true si la lectura fue exitosa.
+ */
+
 bool MAX31328RTC::getDateTime(uint16_t& year, uint8_t& month, uint8_t& day,
                               uint8_t& hour, uint8_t& minute, uint8_t& second) {
     
@@ -203,6 +280,11 @@ bool MAX31328RTC::getDateTime(uint16_t& year, uint8_t& month, uint8_t& day,
     return true;
 }
 
+/**
+ * @brief Obtiene el timestamp Unix (UTC) desde RTC.
+ * @return timestamp Unix (segundos) o 0 en caso de error.
+ */
+
 uint32_t MAX31328RTC::getUnixTimestamp() {
     uint16_t year;
     uint8_t month, day, hour, minute, second;
@@ -225,6 +307,12 @@ uint32_t MAX31328RTC::getUnixTimestamp() {
     return (uint32_t)timestamp;
 }
 
+/**
+ * @brief Configura la fecha/hora del RTC usando un timestamp Unix.
+ * @param timestamp Timestamp Unix (segundos).
+ * @return true si fue exitoso.
+ */
+
 bool MAX31328RTC::setUnixTimestamp(uint32_t timestamp) {
     time_t rawtime = timestamp;
     struct tm* timeinfo = localtime(&rawtime);
@@ -238,6 +326,11 @@ bool MAX31328RTC::setUnixTimestamp(uint32_t timestamp) {
         timeinfo->tm_sec
     );
 }
+
+/**
+ * @brief Lee la temperatura interna del RTC (si el chip la provee).
+ * @return Temperatura en °C o -999.0f en caso de error.
+ */
 
 float MAX31328RTC::getTemperature() {
     if (!initialized && !isPresent()) {
@@ -257,6 +350,11 @@ float MAX31328RTC::getTemperature() {
     return temperature;
 }
 
+/**
+ * @brief Devuelve la fecha/hora formateada como string "YYYY-MM-DD HH:MM:SS".
+ * @return String con fecha y hora o mensaje de error si falla lectura.
+ */
+
 String MAX31328RTC::getFormattedDateTime() {
     uint16_t year;
     uint8_t month, day, hour, minute, second;
@@ -271,6 +369,13 @@ String MAX31328RTC::getFormattedDateTime() {
     
     return String(buffer);
 }
+
+/**
+ * @brief Sincroniza el RTC con un servidor NTP usando la conexión WiFi del ESP.
+ * @param ntpServer Host del servidor NTP (ej. "pool.ntp.org").
+ * @param gmtOffset Offset horario en horas (ej. -5 para UTC-5).
+ * @return true si la sincronización y actualización del RTC fue exitosa.
+ */
 
 bool MAX31328RTC::syncWithNTP(const char* ntpServer, int gmtOffset) {
     Serial.println("MAX31328: Sincronizando con NTP...");
@@ -300,6 +405,10 @@ bool MAX31328RTC::syncWithNTP(const char* ntpServer, int gmtOffset) {
     return result;
 }
 
+/**
+ * @brief Imprime información de depuración en Serial (estado, valores y registros).
+ */
+
 void MAX31328RTC::printDebugInfo() {
     Serial.println("=== MAX31328 DEBUG INFO ===");
     Serial.printf("Inicializado: %s\n", initialized ? "Sí" : "No");
@@ -319,6 +428,10 @@ void MAX31328RTC::printDebugInfo() {
     Serial.println("==========================");
 }
 
+/**
+ * @brief Imprime registros principales del RTC (tiempo, control y status).
+ */
+
 void MAX31328RTC::printRegisters() {
     Serial.println("Registros principales:");
     
@@ -337,13 +450,32 @@ void MAX31328RTC::printRegisters() {
 
 // ——— FUNCIONES AUXILIARES ———
 
+/**
+ * @brief Convierte un valor decimal (0..99) a BCD (binary coded decimal).
+ * @param val Valor decimal.
+ * @return Valor en formato BCD.
+ */
+
 uint8_t MAX31328RTC::decToBcd(uint8_t val) {
     return ((val / 10) << 4) + (val % 10);
 }
 
+/**
+ * @brief Convierte de BCD a decimal.
+ * @param val Valor en BCD.
+ * @return Valor decimal.
+ */
+
 uint8_t MAX31328RTC::bcdToDec(uint8_t val) {
     return ((val >> 4) * 10) + (val & 0x0F);
 }
+
+/**
+ * @brief Escribe un único registro en el RTC vía I2C.
+ * @param reg Dirección del registro.
+ * @param value Valor a escribir.
+ * @return true si la escritura fue exitosa.
+ */
 
 bool MAX31328RTC::writeRegister(uint8_t reg, uint8_t value) {
     Wire.beginTransmission(i2c_address);
@@ -358,6 +490,12 @@ bool MAX31328RTC::writeRegister(uint8_t reg, uint8_t value) {
     
     return true;
 }
+
+/**
+ * @brief Lee un único registro del RTC vía I2C.
+ * @param reg Dirección del registro.
+ * @return Valor leído o 0xFF si hubo error.
+ */
 
 uint8_t MAX31328RTC::readRegister(uint8_t reg) {
     Wire.beginTransmission(i2c_address);
@@ -378,6 +516,14 @@ uint8_t MAX31328RTC::readRegister(uint8_t reg) {
     return 0xFF;
 }
 
+/**
+ * @brief Escribe múltiples registros consecutivos comenzando en startReg.
+ * @param startReg Registro inicial.
+ * @param buffer Puntero a datos a escribir.
+ * @param length Número de bytes a escribir.
+ * @return true si la escritura fue exitosa.
+ */
+
 bool MAX31328RTC::writeMultipleRegisters(uint8_t startReg, uint8_t* buffer, uint8_t length) {
     Wire.beginTransmission(i2c_address);
     Wire.write(startReg);
@@ -396,6 +542,14 @@ bool MAX31328RTC::writeMultipleRegisters(uint8_t startReg, uint8_t* buffer, uint
     
     return true;
 }
+
+/**
+ * @brief Lee múltiples registros consecutivos comenzando en startReg.
+ * @param startReg Registro inicial.
+ * @param buffer Puntero donde almacenar los bytes leídos.
+ * @param length Número de bytes a leer.
+ * @return true si la lectura fue exitosa.
+ */
 
 bool MAX31328RTC::readMultipleRegisters(uint8_t startReg, uint8_t* buffer, uint8_t length) {
     Wire.beginTransmission(i2c_address);
