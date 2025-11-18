@@ -98,7 +98,7 @@ public:
      * @return true si se configuró correctamente
      */
     bool setDateTime(uint16_t year, uint8_t month, uint8_t day, 
-                     uint8_t hour, uint8_t minute, uint8_t second);
+                        uint8_t hour, uint8_t minute, uint8_t second);
     
     /**
      * @brief Obtener fecha y hora actual
@@ -111,7 +111,7 @@ public:
      * @return true si la lectura fue exitosa
      */
     bool getDateTime(uint16_t& year, uint8_t& month, uint8_t& day,
-                     uint8_t& hour, uint8_t& minute, uint8_t& second);
+                        uint8_t& hour, uint8_t& minute, uint8_t& second);
     
     /**
      * @brief Obtener timestamp Unix
