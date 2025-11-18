@@ -1,0 +1,218 @@
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "9.0")
+	(uuid "a11d19fb-adaf-4f3b-a4a7-7109d6eb9817")
+	(paper "A4")
+	(lib_symbols)
+	(wire
+		(pts
+			(xy 104.14 48.26) (xy 116.84 48.26)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "03d6cd0c-80ee-4984-a161-59dd9b41451c")
+	)
+	(wire
+		(pts
+			(xy 104.14 44.45) (xy 116.84 44.45)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6479a9ac-e773-459d-976a-66a571de0c94")
+	)
+	(wire
+		(pts
+			(xy 104.14 40.64) (xy 116.84 40.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e66cfab1-7f06-440d-a3dd-e4b1f96aad74")
+	)
+	(wire
+		(pts
+			(xy 104.14 52.07) (xy 116.84 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e70a869e-650b-450a-90de-a9982150fafe")
+	)
+	(sheet
+		(at 116.84 33.02)
+		(size 68.58 33.02)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "037e7566-7b48-4418-9eeb-90142a44aaa5")
+		(property "Sheetname" "MCU"
+			(at 116.84 32.3084 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "ESP_Connection.kicad_sch"
+			(at 116.84 66.6246 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "IO10_RTC" bidirectional
+			(at 116.84 40.64 180)
+			(uuid "5c11a3ea-b22c-4ef3-a7b4-c2d3e43fa6a5")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "SCL_RTC" bidirectional
+			(at 116.84 44.45 180)
+			(uuid "2e34dfbe-10c1-42ff-9a31-4558c0c9008d")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "SDA_RTC" bidirectional
+			(at 116.84 48.26 180)
+			(uuid "60d665fa-a07b-4699-abca-41bb5f158f80")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "VH" passive
+			(at 116.84 52.07 180)
+			(uuid "a0cf15f9-4e34-4cf7-ba5b-3aa4b4294146")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(instances
+			(project "Male_project"
+				(path "/a11d19fb-adaf-4f3b-a4a7-7109d6eb9817"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 33.02 33.02)
+		(size 71.12 34.29)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "f90c9c8c-4e28-4587-8bba-54b39e3b93e3")
+		(property "Sheetname" "Battery_Manager"
+			(at 33.02 32.3084 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "Chargue_Conection.kicad_sch"
+			(at 33.02 67.8946 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "IO10_RTC" bidirectional
+			(at 104.14 40.64 0)
+			(uuid "b34687b1-6122-40a3-85ca-6ac632e2fcdc")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "SCL_RTC" bidirectional
+			(at 104.14 44.45 0)
+			(uuid "73f3b1a9-6800-4fcb-85f3-5a7ca7558fc3")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "SDA_RTC" bidirectional
+			(at 104.14 48.26 0)
+			(uuid "6c936be5-1456-4c7a-b97c-63bc11439560")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "VH" passive
+			(at 104.14 52.07 0)
+			(uuid "a2196b20-6222-40e1-8a41-2ae6f2d90a32")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(instances
+			(project "Male_project"
+				(path "/a11d19fb-adaf-4f3b-a4a7-7109d6eb9817"
+					(page "3")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)
