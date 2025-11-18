@@ -437,7 +437,7 @@ namespace pHSensor {
             last_reading_time = millis();
             
             Serial.printf(" pH: %.2f | V: %.3fV | %s (%.0f ms)\n", 
-                         ph, voltage, getWaterType(ph).c_str(), millis() - start_time);
+                            ph, voltage, getWaterType(ph).c_str(), millis() - start_time);
         } else {
             reading.ph_value = 0.0;
             reading.voltage = voltage;
@@ -474,7 +474,7 @@ namespace pHSensor {
         phOffset = offset;
         phSlope = slope;
         Serial.printf(" Calibración pH actualizada: offset=%.2f, pendiente=%.2f\n", 
-                     phOffset, phSlope);
+                        phOffset, phSlope);
     }
     
     /**
@@ -606,8 +606,8 @@ namespace pHSensor {
         Serial.printf("Voltaje: %.3fV\n", last_reading.voltage);
         Serial.printf("Timestamp: %u ms\n", last_reading.timestamp);
         Serial.printf("Estado: 0x%02X (%s)\n", 
-                     last_reading.sensor_status,
-                     last_reading.valid ? "VÁLIDA" : "INVÁLIDA");
+                        last_reading.sensor_status,
+                        last_reading.valid ? "VÁLIDA" : "INVÁLIDA");
         Serial.println("---------------------------");
     }
     
@@ -698,8 +698,8 @@ namespace pHSensor {
         
         if (last_reading.valid) {
             Serial.printf("Última lectura: pH %.2f (%.3fV) - %s\n", 
-                         last_reading.ph_value, last_reading.voltage,
-                         getWaterType(last_reading.ph_value).c_str());
+                            last_reading.ph_value, last_reading.voltage,
+                            getWaterType(last_reading.ph_value).c_str());
         } else {
             Serial.println("Sin lecturas válidas recientes");
         }
@@ -731,7 +731,7 @@ namespace pHSensor {
             Serial.printf("Estado: %s\n", isPHInRange(ph) ? "VÁLIDO" : "FUERA DE RANGO");
         } else {
             Serial.printf(" Voltaje fuera de rango válido (%.1f-%.1fV)\n", 
-                         MIN_VALID_VOLTAGE, MAX_VALID_VOLTAGE);
+                            MIN_VALID_VOLTAGE, MAX_VALID_VOLTAGE);
         }
         
         Serial.println("========================");

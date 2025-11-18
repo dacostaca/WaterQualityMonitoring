@@ -135,7 +135,7 @@ bool MAX31328RTC::isRunning() {
     bool running = !(status & MAX31328_STAT_OSF);
     
     Serial.printf("MAX31328: Oscilador %s (Status: 0x%02X)\n", 
-                  running ? "funcionando" : "detenido", status);
+                    running ? "funcionando" : "detenido", status);
     
     return running;
 }
@@ -204,7 +204,7 @@ bool MAX31328RTC::clearLostTimeFlag() {
  */
 
 bool MAX31328RTC::setDateTime(uint16_t year, uint8_t month, uint8_t day, 
-                              uint8_t hour, uint8_t minute, uint8_t second) {
+                                uint8_t hour, uint8_t minute, uint8_t second) {
     
     if (!initialized && !isPresent()) {
         Serial.println("MAX31328: RTC no inicializado");
@@ -219,7 +219,7 @@ bool MAX31328RTC::setDateTime(uint16_t year, uint8_t month, uint8_t day,
     }
     
     Serial.printf("MAX31328: Configurando %04d-%02d-%02d %02d:%02d:%02d\n",
-                  year, month, day, hour, minute, second);
+                    year, month, day, hour, minute, second);
     
     // Preparar datos en formato BCD
     uint8_t timeRegs[7];
@@ -256,7 +256,7 @@ bool MAX31328RTC::setDateTime(uint16_t year, uint8_t month, uint8_t day,
  */
 
 bool MAX31328RTC::getDateTime(uint16_t& year, uint8_t& month, uint8_t& day,
-                              uint8_t& hour, uint8_t& minute, uint8_t& second) {
+                                uint8_t& hour, uint8_t& minute, uint8_t& second) {
     
     if (!initialized && !isPresent()) {
         return false;
@@ -365,7 +365,7 @@ String MAX31328RTC::getFormattedDateTime() {
     
     char buffer[20];
     snprintf(buffer, sizeof(buffer), "%04d-%02d-%02d %02d:%02d:%02d",
-             year, month, day, hour, minute, second);
+                year, month, day, hour, minute, second);
     
     return String(buffer);
 }
@@ -536,7 +536,7 @@ bool MAX31328RTC::writeMultipleRegisters(uint8_t startReg, uint8_t* buffer, uint
     
     if (error != 0) {
         Serial.printf("MAX31328: Error escribiendo múltiples registros desde 0x%02X: %d\n", 
-                      startReg, error);
+                        startReg, error);
         return false;
     }
     
@@ -558,7 +558,7 @@ bool MAX31328RTC::readMultipleRegisters(uint8_t startReg, uint8_t* buffer, uint8
     
     if (error != 0) {
         Serial.printf("MAX31328: Error en transmisión múltiple reg 0x%02X: %d\n", 
-                      startReg, error);
+                        startReg, error);
         return false;
     }
     

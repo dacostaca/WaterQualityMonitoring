@@ -10,9 +10,9 @@
  * @version 1.0
  */
 
- #include "Turbidez.h"
+#include "Turbidez.h"
 
- /**
+/**
  * @namespace TurbiditySensor
  * @brief Espacio de nombres para todas las funcionalidades del sensor de turbidez
  * @details Contiene variables globales internas, funciones de lectura, calibración,
@@ -342,7 +342,7 @@ namespace TurbiditySensor {
             last_reading_time = millis();
             
             Serial.printf(" Turbidez: %.1f NTU | V: %.3fV | %s (%.0f ms)\n", 
-                         ntu, voltage, getWaterQuality(ntu).c_str(), millis() - start_time);
+                            ntu, voltage, getWaterQuality(ntu).c_str(), millis() - start_time);
         } else {
             reading.turbidity_ntu = 0.0;
             reading.voltage = voltage;
@@ -391,9 +391,9 @@ namespace TurbiditySensor {
         // NTU = a*V³ + b*V² + c*V + d
         float v = voltage;
         float ntu = calib_a * v * v * v + 
-                   calib_b * v * v + 
-                   calib_c * v + 
-                   calib_d;
+                    calib_b * v * v + 
+                    calib_c * v + 
+                    calib_d;
         
         // Asegurar que NTU no sea negativo
         if (ntu < 0) ntu = 0;
@@ -445,7 +445,7 @@ namespace TurbiditySensor {
         calib_c = c;
         calib_d = d;
         Serial.printf(" Calibración turbidez actualizada: a=%.1f, b=%.1f, c=%.1f, d=%.1f\n", 
-                     calib_a, calib_b, calib_c, calib_d);
+                        calib_a, calib_b, calib_c, calib_d);
     }
     
     /**
@@ -545,8 +545,8 @@ namespace TurbiditySensor {
         Serial.printf("Voltaje: %.3fV\n", last_reading.voltage);
         Serial.printf("Timestamp: %u ms\n", last_reading.timestamp);
         Serial.printf("Estado: 0x%02X (%s)\n", 
-                     last_reading.sensor_status,
-                     last_reading.valid ? "VÁLIDA" : "INVÁLIDA");
+                        last_reading.sensor_status,
+                        last_reading.valid ? "VÁLIDA" : "INVÁLIDA");
         Serial.printf("Calidad: %s\n", getWaterQuality(last_reading.turbidity_ntu).c_str());
         Serial.printf("Categoría: %s\n", getTurbidityCategory(last_reading.turbidity_ntu).c_str());
         Serial.println("---------------------------");
@@ -657,14 +657,14 @@ namespace TurbiditySensor {
         Serial.printf("Estado: %s\n", initialized ? "Inicializado" : "No inicializado");
         Serial.printf("Pin ADC: %d\n", sensor_pin);
         Serial.printf("Ecuación: NTU = %.1f*V³ + %.1f*V² + %.1f*V + %.1f\n", 
-                     calib_a, calib_b, calib_c, calib_d);
+                        calib_a, calib_b, calib_c, calib_d);
         Serial.printf("Rango válido: %.0f - %.0f NTU\n", MIN_VALID_NTU, MAX_VALID_NTU);
         Serial.printf("Voltaje válido: %.1f - %.1fV\n", MIN_VALID_VOLTAGE, MAX_VALID_VOLTAGE);
         
         if (last_reading.valid) {
             Serial.printf("Última lectura: %.1f NTU (%.3fV) - %s\n", 
-                         last_reading.turbidity_ntu, last_reading.voltage,
-                         getWaterQuality(last_reading.turbidity_ntu).c_str());
+                            last_reading.turbidity_ntu, last_reading.voltage,
+                            getWaterQuality(last_reading.turbidity_ntu).c_str());
         } else {
             Serial.println("Sin lecturas válidas recientes");
         }
@@ -697,7 +697,7 @@ namespace TurbiditySensor {
             Serial.printf("Categoría: %s\n", getTurbidityCategory(ntu).c_str());
         } else {
             Serial.printf(" Voltaje fuera de rango válido (%.1f-%.1fV)\n", 
-                         MIN_VALID_VOLTAGE, MAX_VALID_VOLTAGE);
+                            MIN_VALID_VOLTAGE, MAX_VALID_VOLTAGE);
         }
         
         Serial.println("========================");
@@ -751,7 +751,7 @@ namespace TurbiditySensor {
         for (float v = 0.6; v <= 2.2; v += 0.1) {
             float ntu = voltageToNTU(v);
             Serial.printf("   %.2fV    |    %.1f NTU    | %s\n", 
-                         v, ntu, getWaterQuality(ntu).c_str());
+                            v, ntu, getWaterQuality(ntu).c_str());
         }
     }
     

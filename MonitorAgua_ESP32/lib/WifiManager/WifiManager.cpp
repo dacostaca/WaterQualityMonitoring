@@ -44,10 +44,10 @@ WiFiManager* WiFiManager::_instance = nullptr;
  */
 WiFiManager::WiFiManager(bool enableSerial) 
     : _enableSerialOutput(enableSerial), _currentStatus(WIFI_DISCONNECTED),
-      _wifiInitialized(false), _websocketConnected(false), _connectionStartTime(0),
-      _totalDataSent(0), _lastErrorCode(0), _logCallback(nullptr), 
-      _errorCallback(nullptr), _statusCallback(nullptr), _rtcMemory(nullptr),
-      _watchdog(nullptr), _dataTransmissionComplete(false) {
+        _wifiInitialized(false), _websocketConnected(false), _connectionStartTime(0),
+        _totalDataSent(0), _lastErrorCode(0), _logCallback(nullptr), 
+        _errorCallback(nullptr), _statusCallback(nullptr), _rtcMemory(nullptr),
+        _watchdog(nullptr), _dataTransmissionComplete(false) {
     
     // Configurar instancia estática para callback
     _instance = this;
@@ -346,7 +346,7 @@ bool WiFiManager::sendStoredData(int maxReadings) {
     
     // Notificar inicio de envío
     String startMsg = "{\"action\":\"sending_data\",\"timestamp\":\"" + 
-                      String(millis()) + "\"}";
+                        String(millis()) + "\"}";
     _webSocket.sendTXT(startMsg);
     delay(100);
     

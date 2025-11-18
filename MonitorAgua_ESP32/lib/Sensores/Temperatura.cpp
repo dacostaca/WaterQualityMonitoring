@@ -314,8 +314,8 @@ namespace TemperatureSensor {
         Serial.printf("Temperatura: %.2f °C\n", last_reading.temperature);
         Serial.printf("Timestamp: %u ms\n", last_reading.timestamp);
         Serial.printf("Estado: 0x%02X (%s)\n", 
-                     last_reading.sensor_status,
-                     last_reading.valid ? "VÁLIDA" : "INVÁLIDA");
+                        last_reading.sensor_status,
+                        last_reading.valid ? "VÁLIDA" : "INVÁLIDA");
         Serial.println("---------------------------------------");
     }
     

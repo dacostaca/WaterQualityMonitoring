@@ -10,9 +10,9 @@
  * @version 1.0
  */
 
- #include "TDS.h"
+#include "TDS.h"
 
- /**
+/**
  * @namespace TDSSensor
  * @brief Espacio de nombres para todas las funcionalidades del sensor TDS
  * @details Contiene variables globales internas, funciones de lectura, calibración,

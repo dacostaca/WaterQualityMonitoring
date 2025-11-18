@@ -362,7 +362,7 @@ void WatchdogManager::recordFailure() {
     }
     
     logf(" Fallo registrado - Consecutivos: %d (Health: %d%%)", 
-         wdt_consecutive_failures, wdt_system_health_score);
+            wdt_consecutive_failures, wdt_system_health_score);
 }
 
 // Verificar fallos críticos
@@ -375,7 +375,7 @@ void WatchdogManager::recordFailure() {
 bool WatchdogManager::hasCriticalFailures() {
     //+10 fallos consecutivos o salud <10%
     return (wdt_consecutive_failures >= MAX_CONSECUTIVE_FAILURES) || 
-           (wdt_system_health_score < 10);
+            (wdt_system_health_score < 10);
 }
 
 // Getters
@@ -429,7 +429,7 @@ bool WatchdogManager::attemptRecovery() {
     wdt_last_successful_operation = millis();
     
     logf(" Recovery completado - Health: %d%%, Fallos: %d", 
-         wdt_system_health_score, wdt_consecutive_failures);
+            wdt_system_health_score, wdt_consecutive_failures);
     
     return true;
 }
@@ -486,8 +486,8 @@ void WatchdogManager::displaySystemHealth() {
     logf("Total errores: %d", wdt_total_errors);
     logf("Memoria libre: %d bytes", ESP.getFreeHeap());
     logf("Watchdog: %s (%s)", 
-         _watchdogInitialized ? "Funcionando" : "Inactivo",
-         hardware_watchdog_available ? "Hardware" : "Software");
+            _watchdogInitialized ? "Funcionando" : "Inactivo",
+            hardware_watchdog_available ? "Hardware" : "Software");
     log("----------------------------------");
 }
 
@@ -512,13 +512,13 @@ void WatchdogManager::displayErrorLog(int maxErrors) {
     for (int i = 0; i < MAX_CRITICAL_ERRORS; i++) {
         if (wdt_critical_errors[i].error_code != ERROR_NONE) {
             uint32_t context = (wdt_critical_errors[i].context[0] << 24) |
-                              (wdt_critical_errors[i].context[1] << 16) |
-                              (wdt_critical_errors[i].context[2] << 8) |
-                              wdt_critical_errors[i].context[3];
+                                (wdt_critical_errors[i].context[1] << 16) |
+                                (wdt_critical_errors[i].context[2] << 8) |
+                                wdt_critical_errors[i].context[3];
             logf("  🔴 Código:%d | Tiempo:%dm | Contexto:%u",
-                 wdt_critical_errors[i].error_code,
-                 wdt_critical_errors[i].timestamp_min,
-                 context);
+                    wdt_critical_errors[i].error_code,
+                    wdt_critical_errors[i].timestamp_min,
+                    context);
             found_critical = true;
         }
     }
@@ -529,13 +529,13 @@ void WatchdogManager::displayErrorLog(int maxErrors) {
     for (int i = MAX_WARNING_ERRORS - 1; i >= 0 && warning_count < maxErrors; i--) {
         if (wdt_warning_errors[i].error_code != ERROR_NONE) {
             uint32_t context = (wdt_warning_errors[i].context[0] << 24) |
-                              (wdt_warning_errors[i].context[1] << 16) |
-                              (wdt_warning_errors[i].context[2] << 8) |
-                              wdt_warning_errors[i].context[3];
+                                (wdt_warning_errors[i].context[1] << 16) |
+                                (wdt_warning_errors[i].context[2] << 8) |
+                                wdt_warning_errors[i].context[3];
             logf("  🟡 Código:%d | Tiempo:%dm | Contexto:%u",
-                 wdt_warning_errors[i].error_code,
-                 wdt_warning_errors[i].timestamp_min,
-                 context);
+                    wdt_warning_errors[i].error_code,
+                    wdt_warning_errors[i].timestamp_min,
+                    context);
             warning_count++;
         }
     }
