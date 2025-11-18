@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <time.h>
 
+extern MAX31328RTC rtcExterno;
 // Añadir variable para modo manual
 
 /**
@@ -44,10 +45,10 @@ WiFiManager* WiFiManager::_instance = nullptr;
  */
 WiFiManager::WiFiManager(bool enableSerial) 
     : _enableSerialOutput(enableSerial), _currentStatus(WIFI_DISCONNECTED),
-        _wifiInitialized(false), _websocketConnected(false), _connectionStartTime(0),
-        _totalDataSent(0), _lastErrorCode(0), _logCallback(nullptr), 
-        _errorCallback(nullptr), _statusCallback(nullptr), _rtcMemory(nullptr),
-        _watchdog(nullptr), _dataTransmissionComplete(false) {
+    _wifiInitialized(false), _websocketConnected(false), _connectionStartTime(0),
+    _totalDataSent(0), _lastErrorCode(0), _logCallback(nullptr), 
+    _errorCallback(nullptr), _statusCallback(nullptr), _rtcMemory(nullptr),
+    _watchdog(nullptr), _calibrationManager(nullptr), _dataTransmissionComplete(false) {
     
     // Configurar instancia estática para callback
     _instance = this;
@@ -108,6 +109,12 @@ void WiFiManager::setManagers(RTCMemoryManager* rtcMemory, WatchdogManager* watc
     log(" Referencias a managers configuradas");
 }
 
+void WiFiManager::setCalibrationManager(CalibrationManager* calibManager) {
+    _calibrationManager = calibManager;
+    log("✓ CalibrationManager configurado");
+}
+
+// Conectar WiFi
 /**
  * @brief Conecta a red WiFi con timeout configurado
  * @return true si conexión exitosa, false si timeout o error
@@ -172,6 +179,20 @@ bool WiFiManager::connectWiFi() {
     logf(" RSSI: %d dBm", WiFi.RSSI());
     
     updateStatus(WIFI_CONNECTED, "WiFi conectado");
+
+    // 🕒 --- SINCRONIZAR RTC CON NTP ---
+    // Solo si el RTC está inicializado y el WiFi conectado
+    if (rtcExterno.isPresent() && rtcExterno.isRunning()) {
+        log("🌐 Sincronizando RTC con NTP (pool.ntp.org, UTC-5)...");
+        if (rtcExterno.syncWithNTP("pool.ntp.org", -5)) {  // UTC-5 = Colombia
+            log("✅ RTC sincronizado correctamente con NTP");
+        } else {
+            log("⚠ No se pudo sincronizar RTC con NTP");
+        }
+    } else {
+        log("⚠ RTC no disponible, no se intentó sincronizar");
+    }
+    // 🕒 --------------------------------
     
     return true;
 }
@@ -346,7 +367,7 @@ bool WiFiManager::sendStoredData(int maxReadings) {
     
     // Notificar inicio de envío
     String startMsg = "{\"action\":\"sending_data\",\"timestamp\":\"" + 
-                        String(millis()) + "\"}";
+                    String(millis()) + "\"}";
     _webSocket.sendTXT(startMsg);
     delay(100);
     
@@ -508,7 +529,8 @@ bool WiFiManager::sendReading(const RTCMemoryManager::SensorReading &reading) {
  * @note Buffer StaticJsonDocument<400> (400 bytes). Aumentar si JSON más grande.
  * @note Si rtc_timestamp inválido (<2021), muestra "No disponible".
  */
-String WiFiManager::createDataJSON(const RTCMemoryManager::SensorReading &reading) {
+String WiFiManager::createDataJSON(const RTCMemoryManager::SensorReading &reading)
+{
     StaticJsonDocument<400> doc;
     
     // Información del dispositivo
@@ -542,10 +564,23 @@ String WiFiManager::createDataJSON(const RTCMemoryManager::SensorReading &readin
         doc["rtc_datetime"] = String(datetime_buffer);
         doc["rtc_date"] = String(date_buffer);
         doc["rtc_time"] = String(time_buffer);
-    } else {
-        doc["rtc_datetime"] = "No disponible";
-        doc["rtc_date"] = "No disponible";
-        doc["rtc_time"] = "No disponible";
+    } else
+    {
+        // Fallback: RTC o NTP no disponible -> dejar en "No disponible" o convertir timestamp relativo
+        if (reading.rtc_timestamp != 0)
+        {
+            // Si tienes un timestamp relativo (por ejemplo, segundos desde boot), podrías intentar convertir, pero
+            // preferimos no mentir y dejar "No disponible" para evitar confusiones.
+            doc["rtc_datetime"] = "No disponible";
+            doc["rtc_date"] = "No disponible";
+            doc["rtc_time"] = "No disponible";
+        }
+        else
+        {
+            doc["rtc_datetime"] = "No disponible";
+            doc["rtc_date"] = "No disponible";
+            doc["rtc_time"] = "No disponible";
+        }
     }
     
     // Datos de sensores

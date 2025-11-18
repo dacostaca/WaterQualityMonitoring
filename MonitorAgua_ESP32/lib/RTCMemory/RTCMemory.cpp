@@ -76,7 +76,7 @@ bool RTCMemoryManager::validateIntegrity() {
     
     // Verificar CRC de datos
     uint32_t calculated_data_crc = calculateCRC32(&rtc_data.readings, 
-                                                    sizeof(rtc_data.readings));
+                                                sizeof(rtc_data.readings));
     if (rtc_data.data_crc != calculated_data_crc) {
         //logf(" Data CRC mismatch: calc=0x%08X, stored=0x%08X", 
           //   calculated_data_crc, rtc_data.data_crc);
@@ -170,7 +170,7 @@ bool RTCMemoryManager::storeReading(const SensorReading &reading) {
     updateCRCs();
     
     logf(" Lectura #%d almacenada en posición %d", 
-            reading.reading_number, currentIndex);
+        reading.reading_number, currentIndex);
     
     // Actualizar índice (buffer circular)
     currentIndex = (currentIndex + 1) % MAX_READINGS;
@@ -275,7 +275,7 @@ int RTCMemoryManager::getRecentReadings(SensorReading readings[], int maxReading
     int toRetrieve = (maxReadings < totalAvailable) ? maxReadings : totalAvailable;
     
     logf(" getRecentReadings: Solicitados=%d, Disponibles=%d, ARecuperar=%d", 
-            maxReadings, totalAvailable, toRetrieve);
+        maxReadings, totalAvailable, toRetrieve);
     
     // Crear array dinámico del tamaño correcto
     SensorReading* tempBuffer = new SensorReading[toRetrieve];
@@ -317,7 +317,7 @@ int RTCMemoryManager::getRecentReadings(SensorReading readings[], int maxReading
 void RTCMemoryManager::displayStoredReadings(int numReadings) {
     log("\n --- DATOS ALMACENADOS EN RTC MEMORY ---");
     logf("Total lecturas: %d | Posición actual: %d", 
-            totalReadings, currentIndex);
+        totalReadings, currentIndex);
     
     // Mostrar últimas N lecturas válidas
     int shown = 0;
@@ -330,8 +330,8 @@ void RTCMemoryManager::displayStoredReadings(int numReadings) {
         
         if (temp.valid && temp.reading_number > 0) {
             logf("  [%d] #%d: T:%.1f°C pH:%.1f Turb:%.1f TDS:%.0f EC:%.1f | Status:0x%02X | %ums",
-                    index, temp.reading_number, temp.temperature, temp.ph, 
-                    temp.turbidity, temp.tds, temp.ec, temp.sensor_status, temp.timestamp);
+                index, temp.reading_number, temp.temperature, temp.ph, 
+                temp.turbidity, temp.tds, temp.ec, temp.sensor_status, temp.timestamp);
             shown++;
         }
     }

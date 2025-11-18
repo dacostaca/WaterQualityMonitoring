@@ -21,6 +21,7 @@
 #include "RTCMemory.h"
 #include "WatchDogManager.h"
 #include "RTC.h"
+#include "CalibrationManager.h"
 
 /**
  * @class WiFiManager
@@ -56,6 +57,13 @@
  * wifiMgr.transmitDataManual(120, 60000);
  * @endcode
  */
+
+struct CalibrationValues {
+    float ph_offset = 0.0f;
+    float ec_offset = 0.0f;
+    float turbidity_offset = 0.0f;
+    // Agrega más sensores según tu proyecto
+};
 class WiFiManager {
 public:
     // ——— Estados de conexión ———
@@ -194,6 +202,7 @@ private:
      * @brief Puntero a WatchdogManager para monitoreo de salud
      */
     WatchdogManager* _watchdog;
+    CalibrationManager* _calibrationManager;
     
     // ——— WebSocket ———
 
@@ -260,7 +269,7 @@ public:
      * @note Marca datos como enviados en RTCMemory si envío exitoso.
      * @warning Función bloqueante. Puede tardar varios minutos con muchas lecturas.
      */
-    bool sendStoredData(int maxReadings = 120);
+    bool sendStoredData(int maxReadings = 160);
     
     /**
      * @brief Envía una lectura de sensor específica al servidor vía WebSocket
@@ -296,8 +305,14 @@ public:
     bool isWiFiConnected();
     
     /**
-     * @brief Verifica si WebSocket está conectado actualmente
-     * @return true si _websocketConnected es true (actualizado por callback)
+     * @brief Configurar referencia al CalibrationManager
+     */
+    void setCalibrationManager(CalibrationManager* calibManager);
+
+
+    /**
+     * @brief Verificar si WebSocket está conectado
+     * @return true si está conectado
      */
     bool isWebSocketConnected();
     
@@ -360,7 +375,7 @@ public:
      * @note Éxito si conecta aunque no haya solicitud (permite verificar conectividad).
      * @note Registra éxito/fallo en watchdog.
      */
-    bool transmitDataManual(int maxReadings = 120, uint32_t waitTimeout = 60000);
+    bool transmitDataManual(int maxReadings = 160, uint32_t waitTimeout = 60000);
     
     /**
      * @brief Configura modo de operación (manual o automático)

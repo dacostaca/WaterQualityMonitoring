@@ -32,6 +32,7 @@
 #include "WifiManager.h"
 #include "RTC.h"
 #include "pH.h"
+#include "CalibrationManager.h"
 
 // ——— Configuración del Sistema ———
 
@@ -71,7 +72,7 @@
  */
 #define MANUAL_WAIT_TIMEOUT 60000
 
-// Intervalos de muestreo para cada sensor (en milisegundos)
+// ---Intervalos de muestreo para cada sensor (en milisegundos)---
 
 /**
  * @def TEMP_INTERVAL
@@ -153,22 +154,14 @@
 #define RTC_SCL_PIN 9
 
 // ——— Configuración WiFi ———
-
-/**
- * @var WIFI_CONFIG
- * @brief Estructura de configuración WiFi y WebSocket
- * @details Contiene credenciales de red, dirección del servidor, puertos y timeouts.
- * @warning Modificar según red local y servidor específico.
- */
 const WiFiManager::wifi_config_t WIFI_CONFIG = {
-    .ssid = "RED_MONITOREO",       ///< SSID de la red WiFi
-    .password = "Holamundo6",      ///< Password de la red WiFi
-    .server_ip = "192.168.137.1",  ///< IP del servidor WebSocket (hotspot móvil típico)
-    .server_port = 8765,           ///< Puerto del servidor WebSocket
-    .connect_timeout_ms = 15000,   ///< Timeout conexión WiFi (15 segundos)
-    .websocket_timeout_ms = 10000, ///< Timeout conexión WebSocket (10 segundos)
-    .max_retry_attempts = 3        ///< Intentos de reconexión (no usado actualmente)
-};
+    .ssid = "RED_MONITOREO",        ///< SSID de la red WiFi
+    .password = "Holamundo6",       ///< Password de la red WiFi
+    .server_ip = "192.168.137.1",   ///< IP del servidor WebSocket (hotspot móvil típic
+    .server_port = 8765,            ///< Puerto del servidor WebSocket
+    .connect_timeout_ms = 15000,    ///< Timeout conexión WiFi (15 segundos)
+    .websocket_timeout_ms = 10000,  ///< Timeout conexión WebSocket (10 segundos)
+    .max_retry_attempts = 3};       ///< Intentos de reconexión (no usado actualmente)
 
 // ——— Instancias globales ———
 
@@ -206,6 +199,12 @@ WiFiManager wifiManager(true);
  * @note Proporciona timestamps Unix precisos y sincronización NTP.
  */
 MAX31328RTC rtcExterno;
+/**
+ * @var calibManager
+ * @brief Instancia global del gestor de calibración de sensores
+ * @note Parámetro true habilita salida por Serial.
+ */
+CalibrationManager calibManager(true);
 
 // ——— Variables para tracking de última lectura de cada sensor ———
 // >>> Estas son las líneas que se añadieron (última vez de lectura)
@@ -304,6 +303,10 @@ void setup()
     digitalWrite(led, HIGH);
     // ——— 1. INICIALIZAR WATCHDOG ———
     watchdog.begin();
+    watchdog.feedWatchdog();
+
+    // 1.5. INICIALIZAR CALIBRATION MANAGER
+    calibManager.begin();
     watchdog.feedWatchdog();
 
     // ——— 2. VERIFICAR/INICIALIZAR RTC MEMORY ———
@@ -471,7 +474,7 @@ void setup()
     {                                           // >>> Esta es la línea que se añadió
         unsigned long currentMillis = millis(); // >>> Esta es la línea que se añadió
 
-        // --- Temperatura ---
+    // Serial.println(" Leyendo temperatura...");
         if (currentMillis - lastTempRead >= TEMP_INTERVAL)
         {                                                              // >>> Esta es la línea que se añadió
             tempReading = TemperatureSensor::takeReadingWithTimeout(); // >>> Esta es la línea que se añadió
@@ -482,7 +485,9 @@ void setup()
             lastTempRead = currentMillis; // >>> Esta es la línea que se añadió
         }
 
-        // --- TDS ---
+    watchdog.feedWatchdog();
+
+    // Serial.println(" Leyendo TDS...");
         if (currentMillis - lastTDSRead >= TDS_INTERVAL)
         {                                                         // >>> Esta es la línea que se añadió
             tdsReading = TDSSensor::takeReadingWithTimeout(25.0); // >>> Esta es la línea que se añadió
@@ -492,8 +497,9 @@ void setup()
             }
             lastTDSRead = currentMillis; // >>> Esta es la línea que se añadió
         }
+    watchdog.feedWatchdog();
 
-        // --- Turbidez ---
+    // Serial.println(" Leyendo turbidez...");
         if (currentMillis - lastTurbidityRead >= TURBIDITY_INTERVAL)
         {                                                                 // >>> Esta es la línea que se añadió
             turbidityReading = TurbiditySensor::takeReadingWithTimeout(); // >>> Esta es la línea que se añadió
@@ -503,8 +509,9 @@ void setup()
             }
             lastTurbidityRead = currentMillis; // >>> Esta es la línea que se añadió
         }
+    watchdog.feedWatchdog();
 
-        // --- pH ---
+    // Serial.println(" Leyendo pH...");
         if (currentMillis - lastPHRead >= PH_INTERVAL)
         {                                                       // >>> Esta es la línea que se añadió
             phReading = pHSensor::takeReadingWithTimeout(25.0); // >>> Esta es la línea que se añadió
@@ -517,6 +524,7 @@ void setup()
 
         delay(50); // >>> Esta es la línea que se añadió (evita saturar CPU)
     }
+    watchdog.feedWatchdog();
 
     // ——— 11. OBTENER TIMESTAMP DEL RTC MAX31328 ———
     uint32_t rtcTimestamp = 0;
@@ -786,22 +794,15 @@ void setup()
 
     // ——— 17. ENTRAR EN DEEP SLEEP ———
     Serial.printf("\n Entrando en Deep Sleep por %llu segundos\n",
-                  deepSleep.calculateSleepTime());
+                    deepSleep.calculateSleepTime());
     Serial.printf(" Próximo despertar en %.1f minutos\n",
-                  deepSleep.calculateSleepTime() / 60.0);
+                    deepSleep.calculateSleepTime() / 60.0);
     Serial.println("==========================================\n");
 
     delay(500);
     deepSleep.goToSleep(true);
 }
 
-/**
- * @brief Función loop() - No se ejecuta en modo deep sleep
- * @details Esta función NO debería ejecutarse nunca porque el sistema entra en
- *          deep sleep al final de setup(). Si se ejecuta, indica que deep sleep
- *          falló y el sistema se reinicia para intentar recuperación.
- * @warning Si aparece este mensaje, revisar configuración de deep sleep.
- */
 void loop()
 {
     // No se ejecuta con Deep Sleep

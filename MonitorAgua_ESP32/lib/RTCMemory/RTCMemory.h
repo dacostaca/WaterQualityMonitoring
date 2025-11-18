@@ -52,7 +52,7 @@ public:
         uint32_t sequence_number;   // Número de secuencia
         uint32_t boot_timestamp;    // Timestamp del último boot
         uint32_t header_crc;        // CRC del header
-        SensorReading readings[120]; // Lecturas de sensores (buffer circular)
+        SensorReading readings[160]; // Lecturas de sensores (buffer circular)
         uint32_t data_crc;          // CRC de todos los datos
         uint32_t magic_end;         // 0x87654321
     } RTCDataStructure;
@@ -60,7 +60,7 @@ public:
 private:
     static const uint32_t MAGIC_START = 0x12345678;
     static const uint32_t MAGIC_END = 0x87654321;
-    static const int MAX_READINGS = 120;
+    static const int MAX_READINGS = 160;
     static const uint32_t MAX_TOTAL_READINGS = 10000;  // Valor máximo lógico
     
     bool _enableSerialOutput;
