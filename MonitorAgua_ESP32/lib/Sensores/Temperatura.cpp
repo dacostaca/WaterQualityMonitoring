@@ -12,6 +12,7 @@
 
 #include "Temperatura.h"
 
+<<<<<<< HEAD
 
 
 /**
@@ -77,6 +78,21 @@ namespace TemperatureSensor {
      *          sistema principal. nullptr si no está configurado.
      */
     void (*error_logger)(int code, int severity, uint32_t context) = nullptr;
+=======
+// ——— Variables internas del módulo ———
+namespace TemperatureSensor { // Abre el namespace 'TemperatureSensor' que encapsula todas las variables y funciones del módulo.
+    
+    // Variables del sensor 
+    OneWire* oneWire = nullptr; // Puntero al objeto OneWire que maneja la comunicación 1-Wire con el sensor DS18B20. Inicialmente nulo.
+    DallasTemperature* sensors = nullptr; // Puntero al objeto DallasTemperature (wrapper de OneWire) para operaciones del sensor.
+    bool initialized = false; // Bandera que indica si el sensor ya fue inicializado (true) o no (false).
+    uint32_t last_reading_time = 0; // Marca de tiempo (ms) de la última lectura válida registrada.
+    TemperatureReading last_reading = {0}; // Estructura que guarda la última lectura (timestamp, temperatura, flags, etc.), inicializada a cero.
+    
+    // Punteros a funciones externas
+    uint16_t* total_readings_counter = nullptr; // Puntero opcional a un contador global de lecturas (gestionado por el sistema principal).
+    void (*error_logger)(int code, int severity, uint32_t context) = nullptr; // Puntero a función para registrar errores en el Watchdog/Logger.
+>>>>>>> 1f7d3cb75334566773cc6b7198c2ada524678eb5
     
     
     
@@ -93,37 +109,38 @@ namespace TemperatureSensor {
      * @warning Si falla la creación de objetos, libera memoria automáticamente y retorna false.
      * @note El sensor DS18B20 requiere resistencia pull-up de 4.7kΩ en el bus OneWire.
      */
-    bool initialize(uint8_t pin) {
-        if (initialized) {
+    bool initialize(uint8_t pin) { // Función pública que inicializa los objetos OneWire y DallasTemperature usando el pin indicado.
+        if (initialized) { // Si ya fue inicializado, evitar reinicializar.
             //Serial.println(" Sensor temperatura ya inicializado");
-            return true;
+            return true; // Retornar true porque ya está inicializado.
+
         }
         
         //Serial.printf(" Inicializando sensor temperatura (pin %d)...\n", pin);
         
         // Crear objetos 
-        oneWire = new OneWire(pin);
-        if (!oneWire) {
-            Serial.println(" Error creando OneWire");
-            return false;
+        oneWire = new OneWire(pin); // Reserva dinámicamente un objeto OneWire asociado al pin pasado.
+        if (!oneWire) { // Si la asignación falló (puntero nulo)...
+            Serial.println(" Error creando OneWire"); // Informar por consola.
+            return false; // Retornar false para indicar fallo en inicialización.
         }
         
-        sensors = new DallasTemperature(oneWire);
-        if (!sensors) {
-            Serial.println(" Error creando DallasTemperature");
-            delete oneWire;
-            oneWire = nullptr;
-            return false;
+        sensors = new DallasTemperature(oneWire); // Crea el wrapper DallasTemperature que usa el bus OneWire.
+        if (!sensors) { // Si no se pudo crear el wrapper...
+            Serial.println(" Error creando DallasTemperature"); // Imprime error.
+            delete oneWire;  // Libera el objeto OneWire para evitar fuga de memoria.
+            oneWire = nullptr; // Establece puntero a nulo por seguridad.
+            return false; // Retorna false por falla.
         }
         
         // Inicializar sensor
-        sensors->begin();
+        sensors->begin(); // Inicializa internamente la librería DallasTemperature (detecta dispositivos, prepara bus).
         
-        initialized = true;
-        last_reading_time = millis();
+        initialized = true; // Marca el módulo como inicializado.
+        last_reading_time = millis(); // Asigna el tiempo actual (ms) como tiempo de referencia para última lectura.
         
         //Serial.println(" Sensor temperatura inicializado correctamente");
-        return true;
+        return true; // Retorna true indicando inicialización exitosa.
     }
     
     /**
@@ -133,17 +150,17 @@ namespace TemperatureSensor {
      * @note Es seguro llamar aunque no esté inicializado (verifica punteros).
      * @note Útil para reset de sistema o cambio de configuración.
      */
-    void cleanup() {
-        if (sensors) {
-            delete sensors;
-            sensors = nullptr;
+    void cleanup() { // Función para liberar recursos y poner el módulo en estado limpio/no inicializado.
+        if (sensors) { // Si existe objeto DallasTemperature...
+            delete sensors; // Libera el objeto.
+            sensors = nullptr; // Evita dangling pointer (puntero colgante).
         }
-        if (oneWire) {
-            delete oneWire;
-            oneWire = nullptr;
+        if (oneWire) {  // Si existe objeto OneWire...
+            delete oneWire; // Libera el objeto.
+            oneWire = nullptr; // Evita puntero colgante.
         }
-        initialized = false;
-        Serial.println(" Sensor temperatura limpiado");
+        initialized = false; // Marca el módulo como no inicializado.
+        Serial.println(" Sensor temperatura limpiado"); // Imprime mensaje informativo.
     }
     
     /**
@@ -152,8 +169,8 @@ namespace TemperatureSensor {
      * @return Estructura TemperatureReading con resultado completo de la medición
      * @see takeReadingWithTimeout() para detalles completos del proceso de lectura
      */
-    TemperatureReading takeReading() {
-        return takeReadingWithTimeout();
+    TemperatureReading takeReading() { // Función pública que simplifica la llamada devolviendo la versión con timeout por defecto.
+        return takeReadingWithTimeout(); // Llama a la función que implementa timeout (la versión completa).
     }
     
     /**
@@ -177,124 +194,129 @@ namespace TemperatureSensor {
      * @note La conversión del DS18B20 tarda típicamente 750ms con resolución de 12 bits.
      * @warning Función bloqueante durante conversión + polling (típicamente <1 segundo).
      */
-    TemperatureReading takeReadingWithTimeout() {
-        TemperatureReading reading = {0};
+    TemperatureReading takeReadingWithTimeout() { // Función que realiza la lectura real con manejo de errores y timeout.
+        TemperatureReading reading = {0}; // Inicializa la estructura de lectura a ceros (timestamp, temperatura, flags...).
         
-        if (!initialized || !sensors) {
-            Serial.println(" Sensor temperatura no inicializado");
-            reading.valid = false;
-            reading.sensor_status = TEMP_STATUS_INVALID_READING;
-            return reading;
+        if (!initialized || !sensors) { // Comprueba que el módulo esté correctamente inicializado y los objetos existan.
+            Serial.println(" Sensor temperatura no inicializado"); // Mensaje de error si no está listo.
+            reading.valid = false; // Marca la lectura como inválida.
+            reading.sensor_status = TEMP_STATUS_INVALID_READING; // Establece el código de estado indicando error.
+            return reading; // Retorna la estructura con invalid flag.
         }
         
         // Incrementar contador 
-        if (total_readings_counter) {
-            (*total_readings_counter)++;
-            reading.reading_number = *total_readings_counter;
+        if (total_readings_counter) { // Si el sistema principal ha proporcionado un puntero al contador global...
+            (*total_readings_counter)++; // Incrementa el contador global en 1.
+            reading.reading_number = *total_readings_counter; // Guarda el número de lectura actual en la estructura.
         }
         
-        reading.timestamp = millis();
+        reading.timestamp = millis(); // Registra la marca de tiempo (ms) de inicio de la lectura.
         
         // Timeout para operación del sensor 
-        uint32_t start_time = millis();
+        uint32_t start_time = millis(); // Marca el tiempo de inicio para comprobar timeout luego.
         
-        sensors->requestTemperatures();
+        sensors->requestTemperatures(); // Instruye al sensor a iniciar la conversión de temperatura (inicio de conversión).
         
         // Verificar timeout 
-        while (!sensors->isConversionComplete()) {
-            if (millis() - start_time > TEMP_OPERATION_TIMEOUT) {
-                Serial.println(" Timeout en lectura de sensor");
+        while (!sensors->isConversionComplete()) { // Espera activa hasta que la conversión finalice o exceda el timeout.
+            if (millis() - start_time > TEMP_OPERATION_TIMEOUT) { // Si el tiempo transcurrido supera el timeout permitido...
+                Serial.println(" Timeout en lectura de sensor"); // Imprime mensaje de timeout.
                 
-                if (error_logger) {
+                if (error_logger) { // Si hay función registrada para logging de errores...
                     error_logger(1, 1, millis() - start_time); // ERROR_SENSOR_TIMEOUT, SEVERITY_WARNING
+                    // Llama al logger con código 1 (timeout) y severidad 1.
                 }
                 
-                reading.valid = false;
-                reading.sensor_status = TEMP_STATUS_TIMEOUT;  
+                reading.valid = false; // Marca la lectura como inválida por timeout.
+                reading.sensor_status = TEMP_STATUS_TIMEOUT;   // Establece el estado de timeout.
                 
-                if (total_readings_counter) {
-                    (*total_readings_counter)--;
+                if (total_readings_counter) { // Si se incrementó el contador al inicio...
+                    (*total_readings_counter)--; // Revertir el incremento para no contar lecturas fallidas.
                 }
                 
-                last_reading = reading;
-                return reading;
+                last_reading = reading; // Guarda la lectura (inválida) como última lectura para trazabilidad.
+                return reading; // Retorna la lectura inválida por timeout.
             }
             
-            delay(10);
+            delay(10); // Espera 10 ms antes de volver a comprobar isConversionComplete() (reduce CPU busy-wait).
             
         }
         
-        float tempC = sensors->getTempCByIndex(0);
+        float tempC = sensors->getTempCByIndex(0); // Obtiene la temperatura del primer sensor en el bus (índice 0).
         
         // Validar lectura
         if (tempC != DEVICE_DISCONNECTED_C && tempC > MIN_VALID_TEMP && tempC < MAX_VALID_TEMP) {
-            reading.temperature = tempC;
-            reading.valid = true;
-            reading.sensor_status = TEMP_STATUS_OK;  
+            // Comprueba que el sensor no esté desconectado y que la temperatura esté dentro de límites razonables.
+            reading.temperature = tempC; // Almacena la temperatura medida en la estructura.
+            reading.valid = true; // Marca la lectura como válida.
+            reading.sensor_status = TEMP_STATUS_OK; // Estado OK.
             
-            last_reading_time = millis();
+            last_reading_time = millis(); // Actualiza la marca de tiempo del último dato válido.
             Serial.printf(" Temperatura: %.2f °C (%.0f ms)\n", tempC, millis() - start_time);
+            // Imprime la temperatura con 2 decimales y el tiempo que tardó la operación.
         } else {
-            reading.temperature = 0.0;
-            reading.valid = false;
-            reading.sensor_status = TEMP_STATUS_INVALID_READING;  
+            reading.temperature = 0.0; // En caso de lectura inválida, pone temperatura a 0.0 para indicar fallo.
+            reading.valid = false; // Marca lectura inválida.
+            reading.sensor_status = TEMP_STATUS_INVALID_READING;   // Estado de lectura inválida.
             
-            if (error_logger) {
+            if (error_logger) { // Si hay un logger definido...
                 error_logger(2, 1, (uint32_t)(tempC * 100)); // ERROR_SENSOR_INVALID_READING, SEVERITY_WARNING
+                // Reporta error tipo 2 (lectura inválida), severidad 1, contexto: tempC*100.
             }
             
             // Revertir incremento 
-            if (total_readings_counter) {
-                (*total_readings_counter)--;
+            if (total_readings_counter) { // Si se incrementó el contador antes...
+                (*total_readings_counter)--; // Revierte el incremento porque la lectura no es válida.
             }
             
-            Serial.printf(" Lectura inválida: %.2f °C\n", tempC);
+            Serial.printf(" Lectura inválida: %.2f °C\n", tempC); // Imprime por consola la lectura inválida para diagnóstico.
         }
         
         // Guardar última lectura
-        last_reading = reading;
+        last_reading = reading; // Guarda la estructura 'reading' en la variable global 'last_reading' para consulta posterior.
         
-        return reading;
+        return reading; // Devuelve la lectura (válida o inválida) al llamador.
     }
     
     /**
      * @brief Consulta si el sensor está inicializado y listo para uso
      * @return true si initialize() fue llamado exitosamente
      */
-    bool isInitialized() {
-        return initialized;
+    bool isInitialized() { // Función que indica si el módulo fue inicializado correctamente.
+        return initialized; // Devuelve la bandera 'initialized'.
     }
     
     /**
      * @brief Consulta validez de la última lectura almacenada
      * @return true si last_reading.valid es true
      */
-    bool isLastReadingValid() {
-        return last_reading.valid;
+    bool isLastReadingValid() { // Indica si la última lectura registrada fue considerada válida.
+        return last_reading.valid; // Lee el campo 'valid' de la estructura 'last_reading'.
     }
     
     /**
      * @brief Obtiene el valor de temperatura de la última lectura
      * @return Temperatura en °C (0.0 si última lectura fue inválida)
      */
-    float getLastTemperature() {
-        return last_reading.temperature;
+    float getLastTemperature() { // Devuelve la última temperatura registrada por el sensor.
+        return last_reading.temperature; // Retorna el valor almacenado en 'last_reading.temperature'.
     }
     
     /**
      * @brief Obtiene timestamp de la última lectura válida
      * @return millis() del momento de última lectura exitosa
      */
-    uint32_t getLastReadingTime() {
-        return last_reading_time;
+    uint32_t getLastReadingTime() { // Devuelve el timestamp (ms) de la última lectura válida.
+        return last_reading_time; // Retorna la variable 'last_reading_time'.
     }
     
     /**
      * @brief Obtiene el total de lecturas realizadas desde el contador global
      * @return Número total de lecturas o 0 si contador no está vinculado
      */
-    uint16_t getTotalReadings() {
+    uint16_t getTotalReadings() { // Devuelve el total de lecturas acumuladas si existe el contador global.
         return total_readings_counter ? *total_readings_counter : 0;
+        // Si 'total_readings_counter' es distinto de nulo devuelve su valor; si no, devuelve 0.
     }
     
     /**
@@ -303,19 +325,25 @@ namespace TemperatureSensor {
      *          Útil para depuración y monitoreo en tiempo real.
      * @note Si no hay lecturas previas (reading_number == 0), informa al usuario.
      */
-    void printLastReading() {
-        if (last_reading.reading_number == 0) {
+    void printLastReading() { // Función utilitaria para imprimir por consola los detalles de la última lectura.
+        if (last_reading.reading_number == 0) { // Función utilitaria para imprimir por consola los detalles de la última lectura.
             Serial.println(" No hay lecturas previas");
-            return;
+            return; // Sale de la función.
         }
         
         Serial.println(" --- ÚLTIMA LECTURA TEMPERATURA ---");
-        Serial.printf("Lectura #%d\n", last_reading.reading_number);
-        Serial.printf("Temperatura: %.2f °C\n", last_reading.temperature);
-        Serial.printf("Timestamp: %u ms\n", last_reading.timestamp);
+        Serial.printf("Lectura #%d\n", last_reading.reading_number); // Imprime el número de lectura.
+        Serial.printf("Temperatura: %.2f °C\n", last_reading.temperature); // Imprime temperatura
+        Serial.printf("Timestamp: %u ms\n", last_reading.timestamp); // Imprime el timestamp (ms).
         Serial.printf("Estado: 0x%02X (%s)\n", 
+<<<<<<< HEAD
                         last_reading.sensor_status,
                         last_reading.valid ? "VÁLIDA" : "INVÁLIDA");
+=======
+                     last_reading.sensor_status,
+                     last_reading.valid ? "VÁLIDA" : "INVÁLIDA");
+                     // Imprime el estado en hex y su interpretación (VÁLIDA o INVÁLIDA).
+>>>>>>> 1f7d3cb75334566773cc6b7198c2ada524678eb5
         Serial.println("---------------------------------------");
     }
     
@@ -326,8 +354,9 @@ namespace TemperatureSensor {
      * @note Rango basado en especificaciones del sensor DS18B20 (-55°C a +125°C),
      *       ajustado a rangos prácticos para aplicaciones de monitoreo de agua.
      */
-    bool isTemperatureInRange(float temp) {
+    bool isTemperatureInRange(float temp) { // Comprueba si una temperatura dada está dentro de los límites permitidos.
         return (temp > MIN_VALID_TEMP && temp < MAX_VALID_TEMP && !isnan(temp));
+        // Devuelve true si temp está entre MIN_VALID_TEMP y MAX_VALID_TEMP y no es NaN.
     }
     
     /**
@@ -338,8 +367,8 @@ namespace TemperatureSensor {
      * @note El puntero debe apuntar a memoria válida durante toda la vida útil del sensor.
      * @warning No pasar punteros a variables locales que puedan salir de scope.
      */
-    void setReadingCounter(uint16_t* total_readings_ptr) {
-        total_readings_counter = total_readings_ptr;
+    void setReadingCounter(uint16_t* total_readings_ptr) { // Permite al sistema principal pasar un puntero al contador global.
+        total_readings_counter = total_readings_ptr; // Asigna el puntero al campo interno 'total_readings_counter'.
     }
     
     /**
@@ -353,8 +382,8 @@ namespace TemperatureSensor {
      * @note La función debe ser thread-safe si se usa en entorno multitarea (FreeRTOS).
      * @warning No pasar punteros a funciones lambda sin captura estática.
      */
-    void setErrorLogger(void (*log_error_func)(int, int, uint32_t)) {
-        error_logger = log_error_func;
+    void setErrorLogger(void (*log_error_func)(int, int, uint32_t)) { // Permite registrar el callback para logging de errores.
+        error_logger = log_error_func; // Guarda el puntero a la función de logging en 'error_logger'.
     }
     
-} // namespace TemperatureSensor
+} // namespace TemperatureSensor 
