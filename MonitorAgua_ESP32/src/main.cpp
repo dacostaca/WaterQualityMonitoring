@@ -52,7 +52,7 @@
  *          sus intervalos configurados (TEMP_INTERVAL, TDS_INTERVAL, etc.).
  * @note Debe ser suficiente para completar al menos una lectura de cada sensor.
  */
-#define ACTIVE_TIME_SECONDS 45
+#define ACTIVE_TIME_SECONDS 40
 
 /**
  * @def WIFI_CHECK_INTERVAL
@@ -79,28 +79,28 @@
  * @brief Intervalo entre lecturas del sensor de temperatura en milisegundos
  * @note 10000 ms = 10 segundos. Durante ACTIVE_TIME_SECONDS (45s) se tomarán ~4 lecturas.
  */
-#define TEMP_INTERVAL 10000 // Temperatura cada 10s
+#define TEMP_INTERVAL 5000 // Temperatura cada 5s
 
 /**
  * @def TDS_INTERVAL
  * @brief Intervalo entre lecturas del sensor TDS en milisegundos
  * @note 10000 ms = 10 segundos. Durante ACTIVE_TIME_SECONDS (45s) se tomarán ~4 lecturas.
  */
-#define TDS_INTERVAL 10000 // TDS cada 10s
+#define TDS_INTERVAL 5000 // TDS cada 5s
 
 /**
  * @def TURBIDITY_INTERVAL
  * @brief Intervalo entre lecturas del sensor de turbidez en milisegundos
  * @note 10000 ms = 10 segundos. Durante ACTIVE_TIME_SECONDS (45s) se tomarán ~4 lecturas.
  */
-#define TURBIDITY_INTERVAL 10000 // Turbidez cada 10s
+#define TURBIDITY_INTERVAL 5000 // Turbidez cada 5s
 
 /**
  * @def PH_INTERVAL
  * @brief Intervalo entre lecturas del sensor de pH en milisegundos
  * @note 10000 ms = 10 segundos. Durante ACTIVE_TIME_SECONDS (45s) se tomarán ~4 lecturas.
  */
-#define PH_INTERVAL 10000 // pH cada 10s
+#define PH_INTERVAL 1000 // pH cada 1s
 
 // ——— Pines de Sensores ———
 

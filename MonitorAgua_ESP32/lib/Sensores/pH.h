@@ -34,7 +34,7 @@
  *          error de timeout (PH_STATUS_TIMEOUT) y registra el evento.
  * @note 5000 ms permite completar múltiples muestras sin bloquear indefinidamente.
  */
-#define PH_OPERATION_TIMEOUT    5000  // Timeout para operación del sensor
+#define PH_OPERATION_TIMEOUT    50000  // Timeout para operación del sensor
 
 // ——— Valores de calibración por defecto ———
 
