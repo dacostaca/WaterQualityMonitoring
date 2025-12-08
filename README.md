@@ -47,7 +47,7 @@ WaterQualityMonitoring/
 │   ├── diseños_pcb/               # Diseños de PCB originales
 │   └── documentacion.pdf          # Documentación de la etapa inicial
 │
-├── Etapa II/                       # Desarrollo actual (este semestre)
+├── Etapa II/                       # Desarrollo más reciente 
 │   ├── Manual de Usuario.md       # Guía completa para el usuario
 │   ├── Pruebas y Validación.pdf   # Documento de pruebas realizadas
 │   └── registro sistema de monitoreo.rar  # Fotos y fuente LaTeX
