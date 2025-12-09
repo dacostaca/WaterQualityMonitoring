@@ -11,6 +11,7 @@ Un sistema autónomo de monitoreo de calidad del agua basado en ESP32 con cuatro
 ## 📋 Tabla de Contenidos
 
 - [Descripción General](#-descripción-general)
+- [Estado del Proyecto](#-estado-del-proyecto)
 - [Estructura del Repositorio](#-estructura-del-repositorio)
   - [Etapa I - Trabajo Previo](#etapa-i---trabajo-previo)
   - [Etapa II - Desarrollo Actual](#etapa-ii---desarrollo-actual)
@@ -19,6 +20,7 @@ Un sistema autónomo de monitoreo de calidad del agua basado en ESP32 con cuatro
 - [Documentación del Código](#-documentación-del-código)
 - [Inicio Rápido](#-inicio-rápido)
 - [Requisitos](#-requisitos)
+- [Colaboradores](#-colaboradores)
 - [Licencia](#-licencia)
 
 ---
@@ -30,43 +32,56 @@ Este proyecto implementa un sistema de monitoreo de calidad del agua diseñado p
 ### ¿Qué mide el sistema?
 
 - **pH**: Nivel de acidez/alcalinidad del agua (0-14)
-- **Temperatura**: Temperatura del agua en °C
+- **Temperatura**: Temperatura del agua en °C usando sensor DS18B20
 - **TDS (Total Dissolved Solids)**: Concentración de sólidos disueltos en ppm
 - **Turbidez**: Claridad del agua en NTU
+
+### Aplicaciones
+
+- Monitoreo ambiental de cuerpos de agua naturales
+- Control de calidad en plantas de tratamiento
+- Investigación científica y educativa
+- Acuicultura y piscicultura
+- Sistemas de agua potable
+
+---
+
+## 📌 Estado del Proyecto
+
+**Estado actual**: El desarrollo del proyecto ha sido completado en su Etapa II. El sistema se encuentra funcional y documentado, listo para su uso o para ser retomado por futuros desarrolladores que deseen realizar mejoras o extensiones.
+
+**Última actualización**: 09 de diciembre de 2025 (Etapa II)
 
 ---
 
 ## 📁 Estructura del Repositorio
 
-El repositorio está organizado por etapas de desarrollo y componentes del sistema:
-
 ```
 WaterQualityMonitoring/
 │
-├── Etapa I/                        # Trabajo previo del proyecto
+├── Etapa I/                        # Trabajo previo del proyecto (01-08-2025)
 │   ├── diseños_pcb/               # Diseños de PCB originales
 │   └── documentacion.pdf          # Documentación de la etapa inicial
 │
-├── Etapa II/                       # Desarrollo actual (este semestre)
+├── Etapa II/                       # Desarrollo actual (09-12-2025)
 │   ├── Manual de Usuario.md       # Guía completa para el usuario
 │   ├── Pruebas y Validación.pdf   # Documento de pruebas realizadas
 │   └── registro sistema de monitoreo.rar  # Fotos y fuente LaTeX
 │
 ├── MonitorAgua_ESP32/             # Código del firmware (ESP32)
-│   ├── src/                       # Código fuente principal
-│   ├── include/                   # Archivos de cabecera
+│   ├── .vscode/                   # Configuración de Visual Studio Code
+│   ├── include/                   # Archivos de cabecera (placeholder)
 │   ├── lib/                       # Librerías del proyecto
-│   ├── platformio.ini            # Configuración de PlatformIO
+│   ├── src/                       # Código fuente principal
+│   ├── test/                      # Directorio de tests (placeholder)
+│   ├── .gitignore                # Archivos ignorados por Git
 │   ├── Doxyfile                  # Configuración para Doxygen
-│   └── README.md                 # Documentación del firmware
+│   └── platformio.ini            # Configuración de PlatformIO
 │
 ├── monitor_agua_pagina/           # Código del servidor web
-│   ├── src/                      # Código fuente del servidor
-│   ├── public/                   # Archivos estáticos (HTML, CSS, JS)
-│   ├── package.json             # Dependencias Node.js
-│   └── README.md                # Documentación del servidor
+│   ├── web_interface/            # Interfaz web del sistema
+│   └── servidor.py               # Servidor Python
 │
-├── LICENSE                       # Licencia del proyecto
 └── README.md                     # Este archivo
 ```
 
@@ -76,12 +91,13 @@ WaterQualityMonitoring/
 
 ### Etapa I - Trabajo Previo
 
-La carpeta **`Etapa I/`** contiene el trabajo realizado por los desarrolladores anteriores del proyecto:
+**Fecha de entrega**: 01 de agosto de 2025
+
+La carpeta **`Etapa I/`** contiene el trabajo realizado por los desarrolladores iniciales del proyecto:
 
 #### 📐 Diseños de PCB
 - **Ubicación**: `Etapa I/diseños_pcb/`
 - **Contenido**: Archivos de diseño de la placa de circuito impreso (PCB) utilizados en las versiones iniciales del proyecto
-- **Formato**: Archivos de diseño electrónico (KiCad, Eagle, Gerber, etc.)
 - **Propósito**: Referencia para entender el hardware original y base para mejoras futuras
 
 #### 📄 Documentación Inicial
@@ -92,22 +108,29 @@ La carpeta **`Etapa I/`** contiene el trabajo realizado por los desarrolladores 
   - Diagramas de conexión
   - Resultados de pruebas preliminares
   - Decisiones de diseño tomadas
-- **Fecha**: Entregada por el equipo anterior
+
+**Colaboradores Etapa I:**
+- Maria Alejandra González Duque
+- Juan Carlos Delgado Figueroa
 
 ---
 
 ### Etapa II - Desarrollo Actual
 
-La carpeta **`Etapa II/`** contiene el trabajo realizado durante el semestre actual:
+**Fecha de entrega**: 09 de diciembre de 2025
+
+La carpeta **`Etapa II/`** contiene el trabajo realizado durante el segundo semestre de 2025:
 
 #### 📖 Manual de Usuario
 - **Archivo**: `Etapa II/Manual de Usuario.md`
 - **Descripción**: Guía completa y detallada para usuarios finales del sistema
 - **Contenido**:
-  - Instalación del entorno de desarrollo
-  - Configuración del hardware
-  - Conexión de sensores
-  - Uso del sistema
+  - Instalación del entorno de desarrollo (Visual Studio Code y PlatformIO)
+  - Configuración del hardware y drivers
+  - Conexión física de sensores a los pines GPIO
+  - Flasheo del programa a la ESP32
+  - Configuración de red WiFi
+  - Uso del sistema y visualización de datos
   - Solución de problemas comunes
   - Referencias y recursos adicionales
 - **Audiencia**: Usuarios finales, técnicos, estudiantes
@@ -119,7 +142,7 @@ La carpeta **`Etapa II/`** contiene el trabajo realizado durante el semestre act
   - Metodología de pruebas
   - Casos de prueba ejecutados
   - Resultados obtenidos
-  - Análisis de desempeño
+  - Análisis de desempeño del sistema
   - Validación de funcionalidades
   - Conclusiones y recomendaciones
 - **Propósito**: Validar el correcto funcionamiento del sistema y documentar su rendimiento
@@ -127,11 +150,17 @@ La carpeta **`Etapa II/`** contiene el trabajo realizado durante el semestre act
 #### 📸 Registro del Sistema (LaTeX)
 - **Archivo**: `Etapa II/registro sistema de monitoreo.rar`
 - **Contenido**:
-  - **Fotografías**: Imágenes del sistema ensamblado, sensores, conexiones, pruebas en campo
+  - **Fotografías**: Imágenes del sistema ensamblado, sensores conectados, pruebas en campo
   - **Fuente LaTeX**: Archivos `.tex` del documento de registro
   - **Recursos**: Figuras, tablas y archivos auxiliares para compilar el documento
 - **Propósito**: Documentación visual del proyecto y fuente editable para reportes académicos
-- **Uso**: Descomprimir el archivo RAR y compilar el documento LaTeX para visualizar el registro completo
+- **Uso**: Descomprimir el archivo RAR y compilar el documento LaTeX para visualizar el registro completo del sistema
+
+**Colaboradores Etapa II:**
+- Daniel Felipe Acosta Castro
+- Oscar Santiago Erazo Mora
+
+*Estudiantes de Ingeniería Electrónica, Universidad Nacional de Colombia*
 
 ---
 
@@ -144,55 +173,104 @@ La carpeta **`MonitorAgua_ESP32/`** contiene todo el código que se ejecuta en l
 ```
 MonitorAgua_ESP32/
 │
-├── src/                           # Código fuente principal
-│   ├── main.cpp                  # Punto de entrada del programa
-│   ├── sensors.cpp               # Gestión de sensores (pH, temp, TDS, turbidez)
-│   ├── wifi_manager.cpp          # Manejo de conectividad WiFi
-│   ├── rtc_handler.cpp           # Control del reloj de tiempo real (RTC)
-│   ├── storage.cpp               # Almacenamiento local de datos
-│   ├── power_management.cpp      # Deep Sleep y gestión de energía
-│   └── watchdog.cpp              # Implementación del Watchdog Timer
+├── .vscode/                       # Configuración del entorno VSCode
+│   └── [archivos de configuración]
 │
-├── include/                       # Archivos de cabecera (.h)
-│   ├── sensors.h                 # Definiciones de sensores
-│   ├── wifi_manager.h            # Definiciones de WiFi
-│   ├── config.h                  # Configuración general del sistema
-│   └── constants.h               # Constantes del proyecto
+├── include/                       # Directorio para archivos de cabecera
+│   └── README                    # Archivo placeholder
 │
 ├── lib/                          # Librerías personalizadas del proyecto
-│   └── [librerías específicas]
+│   ├── CalibrationManager/      # Gestión de calibración de sensores
+│   │   ├── CalibrationManager.cpp
+│   │   └── CalibrationManager.h
+│   │
+│   ├── DeepSleep/               # Implementación de modo Deep Sleep
+│   │   ├── DeepSleep.cpp
+│   │   └── DeepSleep.h
+│   │
+│   ├── RTC/                     # Control del reloj de tiempo real (RTC)
+│   │   ├── RTC.cpp
+│   │   └── RTC.h
+│   │
+│   ├── RTCMemory/               # Gestión de memoria del RTC
+│   │   ├── RTCMemory.cpp
+│   │   └── RTCMemory.h
+│   │
+│   ├── Sensors/                 # Controladores de sensores
+│   │   ├── pH.cpp              # Sensor de pH
+│   │   ├── pH.h
+│   │   ├── Temperature.cpp     # Sensor de temperatura DS18B20
+│   │   ├── Temperature.h
+│   │   ├── TDS.cpp             # Sensor TDS
+│   │   ├── TDS.h
+│   │   ├── Turbidity.cpp       # Sensor de turbidez
+│   │   └── Turbidity.h
+│   │
+│   ├── WatchDog/                # Implementación del Watchdog Timer
+│   │   ├── WatchDog.cpp
+│   │   └── WatchDog.h
+│   │
+│   └── WifiManager/             # Gestión de conectividad WiFi
+│       ├── WifiManager.cpp
+│       └── WifiManager.h
 │
-├── test/                         # Pruebas unitarias (si existen)
+├── src/                          # Código fuente principal
+│   └── main.cpp                 # Punto de entrada del programa
 │
-├── platformio.ini                # Configuración de PlatformIO
-│   # Define: placa, velocidad, librerías, flags de compilación
+├── test/                         # Directorio para tests unitarios
+│   └── README                   # Archivo placeholder
 │
+├── .gitignore                    # Archivos ignorados por Git
 ├── Doxyfile                      # Configuración de Doxygen
-│   # Define cómo generar la documentación del código
-│
-└── README.md                     # Documentación específica del firmware
+└── platformio.ini                # Configuración de PlatformIO
 ```
+
+#### Descripción de Componentes del Firmware
+
+##### Librerías Principales
+
+- **CalibrationManager**: Gestiona los valores de calibración de los sensores, permitiendo ajustar las lecturas para mayor precisión
+- **DeepSleep**: Implementa el modo de bajo consumo de energía, haciendo que la ESP32 entre en Deep Sleep entre mediciones para optimizar el uso de batería
+- **RTC**: Maneja la comunicación con el módulo de reloj de tiempo real (RTC DS3231) para mantener estampas de tiempo precisas
+- **RTCMemory**: Gestiona el almacenamiento de datos en la memoria del RTC que persiste durante los ciclos de Deep Sleep
+- **Sensors**: Contiene los controladores para cada uno de los cuatro sensores:
+  - **pH**: Sensor analógico de pH que mide acidez/alcalinidad del agua
+  - **Temperature**: Sensor digital DS18B20 que usa protocolo OneWire
+  - **TDS**: Sensor analógico de sólidos totales disueltos
+  - **Turbidity**: Sensor analógico de turbidez que mide claridad del agua
+- **WatchDog**: Implementa el temporizador Watchdog para reiniciar automáticamente el sistema en caso de fallos o bloqueos
+- **WifiManager**: Gestiona la conexión WiFi, reconexión automática y comunicación con el servidor
+
+##### Código Principal
+
+- **main.cpp**: Programa principal que orquesta todas las funcionalidades:
+  - Inicialización de sensores y periféricos
+  - Bucle principal de medición
+  - Almacenamiento local de datos
+  - Gestión de ciclos de Deep Sleep
+  - Conexión periódica a WiFi para transmisión de datos
+
+#### Archivos de Configuración
+
+- **platformio.ini**: Define la configuración del proyecto para PlatformIO, incluyendo:
+  - Placa objetivo (ESP32)
+  - Framework (Arduino)
+  - Librerías externas requeridas
+  - Velocidad de baudios para comunicación serial
+  - Flags de compilación
+
+- **Doxyfile**: Configuración para generar documentación automática del código usando Doxygen
 
 #### Funcionalidades Principales del Firmware
 
-- **Adquisición de datos**: Lee valores de los cuatro sensores de forma periódica
-- **Almacenamiento local**: Guarda mediciones en memoria cuando no hay conectividad
-- **Conectividad WiFi**: Se conecta a red configurada para transmisión de datos
-- **RTC**: Mantiene estampas de tiempo precisas con batería de respaldo
-- **Deep Sleep**: Reduce consumo de energía entre mediciones
-- **Watchdog Timer**: Reinicia automáticamente el sistema ante fallos
-- **Protocolo OneWire**: Comunicación con sensor de temperatura DS18B20
-
-#### Tecnologías Utilizadas
-
-- **Framework**: Arduino para ESP32
-- **Plataforma**: PlatformIO
-- **Librerías principales**:
-  - OneWire: Comunicación con DS18B20
-  - DallasTemperature: Lectura de temperatura
-  - RTClib: Manejo del RTC DS3231
-  - WiFi.h: Conectividad WiFi
-  - Preferences: Almacenamiento persistente
+- ⚡ **Adquisición de datos**: Lee valores de los cuatro sensores de forma periódica
+- 💾 **Almacenamiento local**: Guarda mediciones en memoria del RTC cuando no hay conectividad
+- 🌐 **Conectividad WiFi**: Se conecta a red configurada para transmisión de datos al servidor
+- ⏰ **RTC externo**: Mantiene estampas de tiempo precisas con batería de respaldo
+- 🔋 **Deep Sleep**: Reduce consumo de energía entrando en modo de bajo consumo entre mediciones
+- 🛡️ **Watchdog Timer**: Reinicia automáticamente el sistema ante fallos o bloqueos
+- 📊 **Calibración**: Sistema de calibración para ajustar lecturas de sensores
+- 📡 **Protocolo OneWire**: Comunicación con sensor de temperatura DS18B20
 
 ---
 
@@ -205,70 +283,66 @@ La carpeta **`monitor_agua_pagina/`** contiene el servidor web que recibe y visu
 ```
 monitor_agua_pagina/
 │
-├── src/                          # Código fuente del servidor
-│   ├── app.js                   # Aplicación principal de Express
-│   ├── routes/                  # Definición de rutas de la API
-│   │   ├── data.js             # Endpoints para datos de sensores
-│   │   └── device.js           # Endpoints para gestión de dispositivos
-│   ├── controllers/             # Lógica de negocio
-│   │   ├── dataController.js   # Procesamiento de datos
-│   │   └── deviceController.js # Gestión de dispositivos
-│   ├── middleware/              # Middleware de Express
-│   │   ├── auth.js             # Autenticación (si aplica)
-│   │   └── validation.js       # Validación de datos
-│   └── utils/                   # Utilidades
-│       └── logger.js            # Sistema de logs
+├── web_interface/                # Interfaz web del sistema
+│   ├── css/                     # Hojas de estilo
+│   │   └── styles.css          # Estilos de la interfaz
+│   │
+│   ├── js/                      # JavaScript del cliente
+│   │   └── script.js           # Lógica de la interfaz web
+│   │
+│   └── index.html               # Página principal
 │
-├── public/                       # Archivos estáticos (interfaz web)
-│   ├── index.html               # Página principal
-│   ├── css/                     # Estilos CSS
-│   │   └── styles.css
-│   └── js/                      # JavaScript del cliente
-│       ├── main.js              # Lógica principal de la interfaz
-│       ├── charts.js            # Generación de gráficos
-│       └── api.js               # Llamadas a la API
-│
-├── data/                         # Almacenamiento de datos (si aplica)
-│   └── measurements.json        # Datos guardados
-│
-├── config/                       # Configuración del servidor
-│   └── server.config.js         # Parámetros de configuración
-│
-├── package.json                  # Dependencias y scripts de Node.js
-├── package-lock.json             # Versiones exactas de dependencias
-├── .env.example                  # Ejemplo de variables de entorno
-└── README.md                     # Documentación del servidor
+└── servidor.py                   # Servidor Python
 ```
+
+#### Descripción de Componentes del Servidor
+
+##### Servidor Backend
+
+- **servidor.py**: Servidor web implementado en Python que maneja:
+  - Recepción de datos enviados por la ESP32
+  - Procesamiento y validación de mediciones
+  - Almacenamiento temporal de datos
+  - Servicio de la interfaz web
+  - API para consulta de datos históricos
+
+##### Interfaz Web (web_interface/)
+
+- **index.html**: Página principal de la aplicación web que proporciona:
+  - Visualización de datos en tiempo real
+  - Gráficos de tendencias de mediciones
+  - Tabla con historial de datos (últimas 120 mediciones por defecto)
+  - Botón para solicitar datos almacenados en la ESP32
+  - Indicadores de estado de conexión
+
+- **styles.css**: Hoja de estilos que define:
+  - Diseño y apariencia de la interfaz
+  - Estilos para gráficos y tablas
+  - Diseño responsivo
+  - Indicadores visuales de estado
+
+- **script.js**: JavaScript del lado del cliente que maneja:
+  - Solicitudes AJAX al servidor
+  - Actualización dinámica de la interfaz
+  - Generación de gráficos interactivos
+  - Procesamiento y visualización de datos recibidos
+  - Gestión de eventos de usuario (botones, filtros, etc.)
 
 #### Funcionalidades del Servidor
 
-- **API RESTful**: Endpoints para recibir datos de la ESP32
-- **Interfaz web**: Visualización de datos en tiempo real
-- **Gráficos**: Representación visual de tendencias de mediciones
-- **Almacenamiento**: Guarda historial de datos (opcional)
-- **CORS**: Permite peticiones desde diferentes orígenes
-- **Validación**: Verifica integridad de datos recibidos
+- 🌐 **API REST**: Endpoints para recibir datos de la ESP32 vía HTTP
+- 📊 **Visualización**: Interfaz web para mostrar datos en tiempo real y tendencias
+- 💾 **Almacenamiento temporal**: Mantiene datos recientes en memoria para consulta
+- 🔄 **Actualización dinámica**: Refresca automáticamente la interfaz con nuevos datos
+- 📈 **Gráficos**: Generación de gráficos de series de tiempo para cada sensor
+- 🎨 **Interfaz responsiva**: Diseño adaptable a diferentes tamaños de pantalla
 
 #### Tecnologías Utilizadas
 
-- **Runtime**: Node.js
-- **Framework web**: Express.js
-- **Gestión de CORS**: Librería `cors`
-- **Procesamiento de JSON**: `body-parser`
-- **Librerías principales**:
-  - express: Servidor web
-  - cors: Políticas de origen cruzado
-  - body-parser: Parsing de datos JSON
-  - dotenv: Variables de entorno (opcional)
-
-#### Endpoints Principales (Ejemplo)
-
-```
-GET  /api/data          # Obtener últimos datos almacenados
-POST /api/data          # Recibir nuevos datos de la ESP32
-GET  /api/device/status # Consultar estado del dispositivo
-GET  /                  # Servir interfaz web
-```
+- **Backend**: Python (servidor web)
+- **Frontend**: HTML5, CSS3, JavaScript
+- **Comunicación**: HTTP/REST API
+- **Visualización**: JavaScript (librerías de gráficos integradas en script.js)
 
 ---
 
@@ -276,7 +350,7 @@ GET  /                  # Servir interfaz web
 
 ### Documentación Doxygen del Firmware
 
-El código del firmware en la carpeta **`MonitorAgua_ESP32/`** está completamente documentado utilizando el estándar **Doxygen**. Esto permite generar documentación HTML profesional de forma automática.
+El código del firmware en la carpeta **`MonitorAgua_ESP32/`** está completamente documentado utilizando el estándar **Doxygen**. Esto permite generar documentación HTML profesional de forma automática a partir de los comentarios en el código.
 
 #### ¿Qué es Doxygen?
 
@@ -289,52 +363,27 @@ Doxygen es una herramienta que extrae comentarios especialmente formateados del 
 Antes de generar la documentación, asegúrese de tener Doxygen instalado:
 
 **Windows:**
-```bash
-# Descargar desde: https://www.doxygen.nl/download.html
-# Ejecutar el instalador
-```
-
-**macOS:**
-```bash
-brew install doxygen graphviz
-```
-
-**Linux (Ubuntu/Debian):**
-```bash
-sudo apt-get install doxygen graphviz
-```
-
-> **Nota**: Graphviz es opcional pero recomendado para generar diagramas de clases y dependencias.
+1. Descargue el instalador desde: https://www.doxygen.nl/download.html
+2. Ejecute el instalador y siga las instrucciones
 
 ##### Pasos para Generar la Documentación
 
-1. **Abrir una terminal** en la carpeta raíz del firmware:
-   ```bash
-   cd MonitorAgua_ESP32/
+1. **Abrir una terminal** (Command Prompt o PowerShell) en la carpeta raíz del firmware:
+   ```
+   cd MonitorAgua_ESP32
    ```
 
 2. **Ejecutar el comando de Doxygen**:
-   ```bash
+   ```
    doxygen Doxyfile
    ```
 
-3. **Esperar** a que el proceso termine. Verá mensajes indicando el progreso de la generación.
+3. **Esperar** a que el proceso termine. Verá mensajes en la terminal indicando el progreso de la generación.
 
 4. **Acceder a la documentación generada**:
-   - Una vez completado el proceso, se creará una carpeta llamada **`html/`** dentro del proyecto
+   - Una vez completado el proceso, se creará una carpeta llamada **`html/`** dentro del proyecto `MonitorAgua_ESP32/`
    - Navegue a la carpeta: `MonitorAgua_ESP32/html/`
-   - Abra el archivo **`index.html`** en su navegador web
-
-   ```bash
-   # Windows
-   start html/index.html
-   
-   # macOS
-   open html/index.html
-   
-   # Linux
-   xdg-open html/index.html
-   ```
+   - Abra el archivo **`index.html`** en su navegador web preferido (doble clic sobre el archivo)
 
 ##### Contenido de la Documentación
 
@@ -342,58 +391,29 @@ La documentación generada incluye:
 
 - **Índice de archivos**: Listado de todos los archivos del proyecto con su descripción
 - **Índice de clases**: Todas las clases definidas con sus métodos y atributos
-- **Índice de funciones**: Listado alfabético de todas las funciones
+- **Índice de funciones**: Listado alfabético de todas las funciones del proyecto
 - **Diagramas de clases**: Visualización de relaciones entre clases (requiere Graphviz)
 - **Diagramas de dependencias**: Muestra qué archivos dependen de otros
 - **Gráficos de llamadas**: Ilustra qué funciones llaman a otras funciones
-- **Documentación detallada**: Descripción completa de cada función, parámetros, valores de retorno y ejemplos
+- **Documentación detallada**: Descripción completa de cada función con:
+  - Propósito y funcionalidad
+  - Parámetros de entrada
+  - Valores de retorno
+  - Notas y advertencias
+  - Ejemplos de uso (cuando aplica)
 
-##### Ejemplo de Navegación
+##### Navegación de la Documentación
 
-1. Abra `index.html`
-2. En el menú superior, haga clic en "Files" para ver todos los archivos del proyecto
-3. Haga clic en "Classes" para ver las clases definidas
-4. Haga clic en "Functions" para buscar funciones específicas
-5. Use la barra de búsqueda para encontrar elementos específicos
+Una vez abierto `index.html`:
 
-#### 🔍 Formato de Comentarios Doxygen
+1. Use el menú superior para navegar entre secciones:
+   - **Files**: Ver todos los archivos del proyecto
+   - **Classes**: Ver las clases definidas
+   - **Functions**: Buscar funciones específicas
 
-El código fuente utiliza el siguiente formato de comentarios para que Doxygen pueda generar la documentación:
+2. Use la barra de búsqueda en la esquina superior derecha para encontrar elementos específicos
 
-```cpp
-/**
- * @file sensors.cpp
- * @brief Implementación del sistema de gestión de sensores
- * @author [Nombre del Autor]
- * @date 2024
- * @version 1.0
- */
-
-/**
- * @brief Lee el valor de pH del sensor conectado
- * 
- * Esta función lee el valor analógico del pin especificado,
- * lo convierte a un valor de pH usando la fórmula de calibración
- * y aplica un filtro promedio móvil para reducir ruido.
- * 
- * @param pin Pin analógico donde está conectado el sensor de pH
- * @return float Valor de pH medido (rango 0-14)
- * 
- * @note El sensor debe estar calibrado previamente para obtener
- *       valores precisos. Ver calibration_guide.md
- * @warning No usar con voltajes superiores a 3.3V
- * 
- * @see calibratePHSensor()
- * @see applyMovingAverage()
- */
-float readPH(int pin) {
-    // Implementación de la función
-    int rawValue = analogRead(pin);
-    float voltage = rawValue * (3.3 / 4095.0);
-    float pH = convertVoltageToPH(voltage);
-    return applyMovingAverage(pH);
-}
-```
+3. Haga clic en cualquier elemento para ver su documentación detallada
 
 ---
 
@@ -408,23 +428,42 @@ cd WaterQualityMonitoring
 
 ### 2. Configurar el Firmware (ESP32)
 
-```bash
-cd MonitorAgua_ESP32
-# Abrir con PlatformIO en Visual Studio Code
-# Compilar y flashear a la ESP32
-```
+1. Abra Visual Studio Code
+2. Instale la extensión PlatformIO IDE
+3. Abra la carpeta `MonitorAgua_ESP32` con PlatformIO
+4. Conecte la ESP32 al computador mediante USB
+5. Compile y flashee el programa usando el botón "Upload" (→) en la barra inferior de PlatformIO
+
+**Nota importante**: El puerto USB Tipo C de la ESP32 solo funciona en **una orientación**. Si el computador no detecta la placa, desconecte el cable USB, voltéelo e intente conectar nuevamente.
 
 ### 3. Configurar el Servidor
 
-```bash
-cd monitor_agua_pagina
-npm install
-npm start
-```
+1. Navegue a la carpeta del servidor:
+   ```bash
+   cd monitor_agua_pagina
+   ```
+
+2. Asegúrese de tener Python instalado en su sistema
+
+3. Ejecute el servidor:
+   ```bash
+   python servidor.py
+   ```
 
 ### 4. Acceder a la Interfaz Web
 
-Abrir en el navegador: `http://localhost:3000`
+1. Abra su navegador web
+2. Vaya a la dirección proporcionada por el servidor (típicamente `http://localhost:5000` o similar)
+3. Espere a que la ESP32 se conecte a la red WiFi configurada
+4. Use el botón "Solicitar Datos" para descargar las mediciones almacenadas en la ESP32
+
+### 5. Configurar Red WiFi
+
+El sistema está configurado por defecto para conectarse a:
+- **SSID**: `RED_MONITOREO`
+- **Contraseña**: `Holamundo6`
+
+Para cambiar estas credenciales, edite el archivo de configuración en el firmware y vuelva a flashear el programa.
 
 ---
 
@@ -432,65 +471,71 @@ Abrir en el navegador: `http://localhost:3000`
 
 ### Hardware
 
-- ESP32 DevKit V1 o compatible
-- Sensores DFRobot: pH, Temperatura (DS18B20), TDS, Turbidez
-- Módulo RTC DS3231 con batería CR2032 (3.3V)
-- Cable USB Tipo C
-- Fuente de alimentación 5V
+- **Placa**: ESP32 S2 o compatible
+- **Sensores DFRobot**:
+  - Sensor de pH (analógico)
+  - Sensor de temperatura DS18B20 (digital, protocolo OneWire)
+  - Sensor TDS (analógico)
+  - Sensor de turbidez (analógico)
+- **Módulo RTC**: DS3231 con batería CR2032 de 3.3V
+- **Cable**: USB Tipo C
+- **Alimentación**: 5V (USB o fuente externa)
+- **Computador**: Windows 10/11 con puerto USB disponible
 
 ### Software
 
-- [Visual Studio Code](https://code.visualstudio.com/)
-- [PlatformIO IDE](https://platformio.org/)
-- [Node.js](https://nodejs.org/) v14+
-- [CP210x Drivers](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
-- [Doxygen](https://www.doxygen.nl/download.html) (opcional, para documentación)
+- **[Visual Studio Code](https://code.visualstudio.com/)** - Editor de código
+- **[PlatformIO IDE](https://platformio.org/)** - Extensión para VSCode
+- **[Python](https://www.python.org/downloads/)** - Para ejecutar el servidor (versión 3.7 o superior)
+- **[CP210x USB to UART Bridge Drivers](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)** - Drivers para comunicación con ESP32
+- **[Doxygen](https://www.doxygen.nl/download.html)** - (Opcional) Para generar documentación del código
+- **[Graphviz](https://graphviz.org/download/)** - (Opcional) Para diagramas en Doxygen
+
+### Conocimientos Recomendados
+
+- Manejo básico de Visual Studio Code
+- Conceptos básicos de electrónica (voltaje, corriente, conexión de sensores)
+- Navegación en interfaces web
+- Conocimientos básicos de línea de comandos (para ejecutar el servidor)
 
 ---
 
 ## 📄 Documentación Adicional
 
-- **Manual de Usuario**: `Etapa II/Manual de Usuario.md` - Guía completa de uso del sistema
-- **Pruebas y Validación**: `Etapa II/Pruebas y Validación.pdf` - Resultados de pruebas realizadas
-- **Registro LaTeX**: `Etapa II/registro sistema de monitoreo.rar` - Documentación visual y fuente LaTeX
-- **Documentación Etapa I**: `Etapa I/documentacion.pdf` - Trabajo previo del proyecto
+Para información detallada sobre el uso del sistema, consulte:
+
+- **[Manual de Usuario](Etapa%20II/Manual%20de%20Usuario.md)**: Guía completa de instalación, configuración y uso
+- **[Pruebas y Validación](Etapa%20II/Pruebas%20y%20Validación.pdf)**: Resultados de las pruebas realizadas al sistema
+- **[Registro LaTeX](Etapa%20II/registro%20sistema%20de%20monitoreo.rar)**: Documentación visual y fuente LaTeX (descomprimir para acceder)
+- **[Documentación Etapa I](Etapa%20I/documentacion.pdf)**: Trabajo previo del proyecto
+- **Documentación del código**: Generar con Doxygen siguiendo las instrucciones de la sección anterior
 
 ---
 
-## 🤝 Contribuir
+## 👥 Colaboradores
 
-Las contribuciones son bienvenidas. Por favor:
+### Etapa I (01 de agosto de 2025)
+- **Maria Alejandra González Duque**
+- **Juan Carlos Delgado Figueroa**
 
-1. Fork el proyecto
-2. Cree una rama para su función (`git checkout -b feature/NuevaFuncion`)
-3. Documente el código con comentarios Doxygen
-4. Commit sus cambios (`git commit -m 'Agregar nueva función'`)
-5. Push a la rama (`git push origin feature/NuevaFuncion`)
-6. Abra un Pull Request
+*Responsables del diseño inicial de hardware y primera implementación del sistema*
 
----
+### Etapa II (09 de diciembre de 2025)
+- **Daniel Felipe Acosta Castro** - [GitHub](https://github.com/dacostaca)
+- **Oscar Santiago Erazo Mora**
 
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
-
----
-
-## 👥 Autores
-
-- **Equipo Etapa I**: Desarrollo inicial del hardware y firmware base
-- **Equipo Etapa II**: Mejoras, documentación y validación del sistema
-- **[dacostaca](https://github.com/dacostaca)**: Desarrollo actual
-
-Ver la lista completa de [contribuyentes](https://github.com/dacostaca/WaterQualityMonitoring/contributors).
+*Estudiantes de Ingeniería Electrónica*  
+*Universidad Nacional de Colombia*  
+*Segundo semestre de 2025*
 
 ---
 
-## 📞 Soporte
+## 🙏 Agradecimientos
 
-- **Issues**: [GitHub Issues](https://github.com/dacostaca/WaterQualityMonitoring/issues)
-- **Manual de Usuario**: `Etapa II/Manual de Usuario.md`
-- **Documentación del Código**: Generar con Doxygen (ver sección anterior)
+- DFRobot por la documentación de los sensores utilizados
+- Comunidad de PlatformIO por las herramientas de desarrollo
+- Espressif por el soporte de ESP32
+- Universidad Nacional de Colombia por el apoyo académico
 
 ---
 
@@ -498,4 +543,5 @@ Ver la lista completa de [contribuyentes](https://github.com/dacostaca/WaterQual
 
 ---
 
-*Última actualización: Diciembre 2024*
+*Proyecto desarrollado como parte del programa de Ingeniería Electrónica*  
+*Universidad Nacional de Colombia - 2025*
