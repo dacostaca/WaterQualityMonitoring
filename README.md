@@ -63,7 +63,11 @@ WaterQualityMonitoring/
 │   ├── diseños_pcb/               # Diseños de PCB originales
 │   └── documentacion.pdf          # Documentación de la etapa inicial
 │
+<<<<<<< HEAD
 ├── Etapa II/                       # Desarrollo actual (09-12-2025)
+=======
+├── Etapa II/                       # Desarrollo más reciente 
+>>>>>>> 25c87ceb19cd74b694c54b1f2cf4447b98eb3ab7
 │   ├── Manual de Usuario.md       # Guía completa para el usuario
 │   ├── Pruebas y Validación.pdf   # Documento de pruebas realizadas
 │   └── registro sistema de monitoreo.rar  # Fotos y fuente LaTeX
@@ -543,5 +547,9 @@ Para información detallada sobre el uso del sistema, consulte:
 
 ---
 
+<<<<<<< HEAD
 *Proyecto desarrollado como parte del programa de Ingeniería Electrónica*  
 *Universidad Nacional de Colombia - 2025*
+=======
+*Última actualización: Diciembre 2024*
+>>>>>>> 25c87ceb19cd74b694c54b1f2cf4447b98eb3ab7
